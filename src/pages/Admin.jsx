@@ -17,7 +17,7 @@ export default function AdminDashboard() {
   const [profilFilter, setProfilFilter] = useState('tous');
 
   // ── CONFIGURATION DE L'API ──
-  const API_URL = 'http://localhost:5000'; // Modifie cette URL pour la production
+  const API_URL = 'http://localhost:5001'; // Modifie cette URL pour la production
 
   // ── CONNEXION ──
   const handleLogin = async (e) => {
