@@ -14,7 +14,7 @@ export const timelineItems = [
   {
     id: 'jour-1',
     dayLabel: 'Jour 1',
-    date: '3 Mai 2025',
+    date: '3 Mai 2026',
     title: 'Lancement du hackathon',
     items: [
       'Escape game immersif',
@@ -24,7 +24,7 @@ export const timelineItems = [
   {
     id: 'jour-2-4',
     dayLabel: 'Jour 2 – 4',
-    date: '4 - 7 Mai 2025',
+    date: '4 - 7 Mai 2026',
     title: 'Phase de création et de prototypage',
     items: [
       'Travail en équipe avec l’accompagnement d’experts si besoin',
@@ -34,7 +34,7 @@ export const timelineItems = [
   {
     id: 'jour-5',
     dayLabel: 'Jour 5',
-    date: '8 Mai 2025',
+    date: '8 Mai 2026',
     title: 'PITCH FINAL',
     items: [
       'Pitch final devant le jury',
