@@ -1,6 +1,6 @@
 // src/data.js
 
-export const EVENT_DATE = new Date('May 3, 2026 09:00:00');
+export const EVENT_DATE = new Date('May 21, 2026 09:00:00');
 
 export const navLinks = [
   { label: 'Accueil', href: '#hero' },
@@ -14,7 +14,7 @@ export const timelineItems = [
   {
     id: 'jour-1',
     dayLabel: 'Jour 1',
-    date: '3 Mai 2026',
+    date: '21 Mai 2026',
     title: 'Lancement du hackathon',
     items: [
       'Escape game immersif',
@@ -22,9 +22,9 @@ export const timelineItems = [
     ]
   },
   {
-    id: 'jour-2-4',
-    dayLabel: 'Jour 2 – 4',
-    date: '4 - 7 Mai 2026',
+    id: 'jour-2-3',
+    dayLabel: 'Jour 2 – 3',
+    date: '22 - 23 Mai 2026',
     title: 'Phase de création et de prototypage',
     items: [
       'Travail en équipe avec l’accompagnement d’experts si besoin',
@@ -32,9 +32,9 @@ export const timelineItems = [
     ]
   },
   {
-    id: 'jour-5',
-    dayLabel: 'Jour 5',
-    date: '8 Mai 2026',
+    id: 'jour-4',
+    dayLabel: 'Jour 4',
+    date: '24 Mai 2026',
     title: 'PITCH FINAL',
     items: [
       'Pitch final devant le jury',

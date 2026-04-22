@@ -24,7 +24,7 @@ export default function Footer() {
             Hackathon Intelligence Artificielle
           </p>
           <p className="mt-2 font-inter text-[0.7rem] uppercase tracking-widest text-enigmia-gold">
-            Alger · 3–8 Mai 2026
+            Alger · 21–24 Mai 2026
           </p>
         </div>
 

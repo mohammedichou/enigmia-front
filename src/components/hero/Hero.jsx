@@ -170,7 +170,7 @@ export default function SplitHero() {
         
         {/* Label Date / Lieu */}
         <div className="mb-2 inline-block border border-enigmia-gold/30 bg-enigmia-dark/50 px-6 py-2 font-inter text-xs font-semibold uppercase tracking-[0.25em] text-enigmia-gold backdrop-blur-sm">
-          Alger · 3–8 Mai 2026
+          Alger · 21–24 Mai 2026
         </div>
 
         {/* Le Logo Officiel (Image) */}
