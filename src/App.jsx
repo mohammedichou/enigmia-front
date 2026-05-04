@@ -4,8 +4,9 @@ import { Routes, Route } from 'react-router-dom'; // On a retiré BrowserRouter 
 
 // Import de vos pages
 import Home from './pages/Home';
-import InscriptionPage from './pages/Inscription'; 
+import InscriptionPage from './pages/Inscription';
 import AdminDashboard from './pages/Admin';
+import EscapeGame from './pages/EscapeGame';
 
 /* ── Custom cursor optimisé avec GSAP ── */
 function Cursor() {
@@ -84,6 +85,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/inscription" element={<InscriptionPage />} />
         <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/escape" element={<EscapeGame />} />
       </Routes>
     </div>
   );

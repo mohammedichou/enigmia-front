@@ -184,11 +184,24 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <button type="submit" disabled={isLoading} 
+              <button type="submit" disabled={isLoading}
                 className={`flex w-full justify-center rounded-md border border-transparent bg-[#E1C199] py-2 px-4 text-sm font-medium text-[#0a0a0a] shadow-sm hover:bg-[#c9a781] focus:outline-none transition-colors ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}>
                 {isLoading ? 'Connexion en cours...' : 'Se connecter'}
               </button>
             </form>
+
+            <div className="mt-6 border-t border-zinc-800 pt-6">
+              <p className="mb-3 text-center text-[0.65rem] uppercase tracking-[0.25em] text-zinc-500">
+                Mode test
+              </p>
+              <Link
+                to="/escape"
+                className="flex w-full items-center justify-center gap-2 rounded-md border border-zinc-700 bg-transparent py-2 px-4 text-sm font-medium text-zinc-300 transition-colors hover:border-[#E1C199] hover:text-[#E1C199]"
+              >
+                <span>🔓</span>
+                Tester l'Escape Game
+              </Link>
+            </div>
           </div>
         </div>
       </div>

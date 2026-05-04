@@ -66,11 +66,11 @@ export const skills = [
 ];
 
 export const prizes = [
-  { id: 'p1', emoji: '🧠', name: 'IA la plus intelligente', amount: 'XXx DZ' },
-  { id: 'p2', emoji: '✨', name: 'UI la plus ergonomique et design', amount: 'XXx DZ' },
-  { id: 'p3', emoji: '🚀', name: 'Le produit le plus abouti', amount: 'XXx DZ' },
-  { id: 'p4', emoji: '🤝', name: 'L’équipe la plus collaborative', amount: 'XXx DZ' },
-  { id: 'p5', emoji: '💡', name: 'Le produit le plus innovant', amount: 'XXx DZ' }
+  { id: 'p1', emoji: '🧠', name: 'IA la plus intelligente', amount: '60 000 DZD' },
+  { id: 'p2', emoji: '✨', name: 'UI la plus ergonomique et design', amount: '60 000 DZD' },
+  { id: 'p3', emoji: '🚀', name: 'Le produit le plus abouti', amount: '60 000 DZD' },
+  { id: 'p4', emoji: '🤝', name: 'L’équipe la plus collaborative', amount: '60 000 DZD' },
+  { id: 'p5', emoji: '💡', name: 'Le produit le plus innovant', amount: '60 000 DZD' }
 ];
 
 export const profiles = [

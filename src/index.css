@@ -17,5 +17,64 @@ body {
   background-color: var(--color-enigmia-dark);
   color: white;
   /* Optionnel : cacher le curseur système si votre curseur custom fonctionne */
-  cursor: none; 
+  cursor: none;
+}
+
+/* ──────────────────────────────────────── */
+/* Animations & utilities pour l'Escape Game */
+/* ──────────────────────────────────────── */
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(6px); }
+}
+
+@keyframes glitch {
+  0%, 100% { transform: translate(0); text-shadow: 0 0 0 transparent; }
+  20% { transform: translate(-2px, 1px); text-shadow: 2px 0 #005aff, -2px 0 #ff0040; }
+  40% { transform: translate(2px, -1px); text-shadow: -2px 0 #005aff, 2px 0 #ff0040; }
+  60% { transform: translate(-1px, 1px); text-shadow: 1px 0 #005aff, -1px 0 #ff0040; }
+  80% { transform: translate(1px, -1px); text-shadow: 0 0 0 transparent; }
+}
+
+.animate-fade-in { animation: fade-in 0.4s ease-out both; }
+.animate-fade-up { animation: fade-up 0.6s ease-out both; }
+.animate-blink { animation: blink 1s steps(1) infinite; }
+.animate-shake { animation: shake 0.5s ease-in-out; }
+.animate-glitch { animation: glitch 1.6s infinite; }
+
+.bg-scanlines {
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(255, 255, 255, 0.04) 0px,
+    rgba(255, 255, 255, 0.04) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+.bg-radial-vignette {
+  background: radial-gradient(
+    ellipse at center,
+    transparent 40%,
+    rgba(0, 0, 0, 0.6) 100%
+  );
 }
