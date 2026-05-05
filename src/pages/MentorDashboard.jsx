@@ -121,26 +121,44 @@ function BookingsList({ bookings, empty }) {
   return (
     <div className="space-y-3">
       {bookings.map((b) => (
-        <div key={b.id} className="grid grid-cols-12 items-center gap-4 border border-white/10 bg-white/[0.02] p-5">
-          <div className="col-span-12 md:col-span-2">
-            <p className="font-mono text-sm text-enigmia-gold">{b.time}</p>
-            <p className="text-xs text-white/40">{formatDate(b.date)}</p>
+        <div key={b.id} className="border border-white/10 bg-white/[0.02] p-5">
+          <div className="grid grid-cols-12 items-center gap-4">
+            <div className="col-span-12 md:col-span-2">
+              <p className="font-mono text-sm text-enigmia-gold">{b.time}</p>
+              <p className="text-xs text-white/40">{formatDate(b.date)}</p>
+            </div>
+            <div className="col-span-12 md:col-span-5">
+              <p className="text-[0.6rem] uppercase tracking-widest text-white/40">Équipe</p>
+              <p className="font-poppins font-semibold">{b.team?.displayName || '—'}</p>
+            </div>
+            <div className="col-span-6 md:col-span-3">
+              <p className="text-[0.6rem] uppercase tracking-widest text-white/40">Room</p>
+              <p className="text-sm">
+                <span className="mr-1 text-base">{b.roomData?.icon}</span>
+                {b.roomData?.name}
+              </p>
+            </div>
+            <div className="col-span-6 text-right md:col-span-2">
+              <p className="text-[0.6rem] uppercase tracking-widest text-white/40">Durée</p>
+              <p className="font-mono text-sm">{b.duration} min</p>
+            </div>
           </div>
-          <div className="col-span-12 md:col-span-5">
-            <p className="text-[0.6rem] uppercase tracking-widest text-white/40">Équipe</p>
-            <p className="font-poppins font-semibold">{b.team?.displayName || '—'}</p>
-          </div>
-          <div className="col-span-6 md:col-span-3">
-            <p className="text-[0.6rem] uppercase tracking-widest text-white/40">Room</p>
-            <p className="text-sm">
-              <span className="mr-1 text-base">{b.roomData?.icon}</span>
-              {b.roomData?.name}
-            </p>
-          </div>
-          <div className="col-span-6 text-right md:col-span-2">
-            <p className="text-[0.6rem] uppercase tracking-widest text-white/40">Durée</p>
-            <p className="font-mono text-sm">{b.duration} min</p>
-          </div>
+          {(b.expertise || b.problem) && (
+            <div className="mt-4 space-y-1 border-t border-white/10 pt-3 text-xs">
+              {b.expertise && (
+                <p>
+                  <span className="text-white/40">Expertise demandée : </span>
+                  <span className="text-white/80">{b.expertise}</span>
+                </p>
+              )}
+              {b.problem && (
+                <p>
+                  <span className="text-white/40">Problématique : </span>
+                  <span className="text-white/80">{b.problem}</span>
+                </p>
+              )}
+            </div>
+          )}
         </div>
       ))}
     </div>

@@ -12,13 +12,15 @@ import {
   getStoredSlots,
   setStoredSlots,
   getStoredBookings,
+  getStoredSubmissions,
 } from '../data/dashboard';
 
 const TABS = [
   { id: 'teams', label: 'Équipes & Points' },
-  { id: 'documents', label: 'Documents' },
+  { id: 'documents', label: 'Ressources pédagogiques' },
   { id: 'events', label: 'Calendrier' },
   { id: 'mentors', label: 'Mentors & Slots' },
+  { id: 'submissions', label: 'Livrables' },
 ];
 
 export default function AdminPro() {
@@ -75,6 +77,7 @@ export default function AdminPro() {
         {tab === 'documents' && <DocumentsTab />}
         {tab === 'events' && <EventsTab />}
         {tab === 'mentors' && <MentorsTab />}
+        {tab === 'submissions' && <SubmissionsTab />}
       </main>
     </div>
   );
@@ -229,7 +232,7 @@ function TeamsTab() {
   );
 }
 
-/* ─────────── DOCUMENTS ─────────── */
+/* ─────────── RESSOURCES PÉDAGOGIQUES ─────────── */
 function DocumentsTab() {
   const [docs, setDocs] = useState(() => getStoredDocuments());
   const [form, setForm] = useState({ title: '', filename: '', size: '' });
@@ -281,9 +284,9 @@ function DocumentsTab() {
   return (
     <div>
       <div className="mb-6">
-        <h2 className="font-poppins text-2xl font-bold">Documents PDF</h2>
+        <h2 className="font-poppins text-2xl font-bold">Ressources pédagogiques</h2>
         <p className="mt-1 text-sm text-white/60">
-          Ressources téléchargeables par les équipes. <span className="text-enigmia-gold">Note :</span> en mode mock, le fichier n'est pas réellement uploadé — seules les métadonnées sont enregistrées.
+          PDFs téléchargeables par les équipes. <span className="text-enigmia-gold">Note :</span> en mode mock, le fichier n'est pas réellement uploadé — seules les métadonnées sont enregistrées.
         </p>
       </div>
 
@@ -632,4 +635,97 @@ function MentorsTab() {
 function formatDate(iso) {
   const d = new Date(iso);
   return d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+/* ─────────── LIVRABLES ─────────── */
+function SubmissionsTab() {
+  const [submissions, setSubmissions] = useState(() => getStoredSubmissions());
+  const teams = getStoredTeams();
+
+  const refresh = () => setSubmissions(getStoredSubmissions());
+
+  const enrichedSubs = submissions
+    .map((s) => ({ ...s, team: teams.find((t) => t.id === s.teamId) }))
+    .sort((a, b) => (a.team?.displayName || '').localeCompare(b.team?.displayName || ''));
+
+  const teamsWithoutSubmission = teams.filter(
+    (t) => !submissions.some((s) => s.teamId === t.id),
+  );
+
+  return (
+    <div>
+      <div className="mb-6">
+        <h2 className="font-poppins text-2xl font-bold">Livrables des équipes</h2>
+        <p className="mt-1 text-sm text-white/60">
+          URL du projet + PDF du pitch déposés par chaque équipe. Deadline : <span className="text-enigmia-gold">dimanche 24 mai, 14h</span>.
+        </p>
+      </div>
+
+      <div className="mb-6 grid gap-3 md:grid-cols-3">
+        <Stat label="Soumis" value={submissions.length} />
+        <Stat label="En attente" value={teamsWithoutSubmission.length} />
+        <Stat label="Total équipes" value={teams.length} />
+      </div>
+
+      {enrichedSubs.length === 0 ? (
+        <p className="text-sm text-white/40">Aucune soumission pour l'instant.</p>
+      ) : (
+        <div className="space-y-3">
+          {enrichedSubs.map((s) => (
+            <div key={s.id} className="border border-enigmia-gold/20 bg-enigmia-gold/[0.03] p-5">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0 flex-1">
+                  <p className="font-poppins text-lg font-semibold">{s.team?.displayName || '—'}</p>
+                  <p className="mt-2 break-all text-sm">
+                    <span className="text-white/40">URL projet : </span>
+                    <a
+                      href={s.projectUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-enigmia-gold underline hover:text-white"
+                    >
+                      {s.projectUrl}
+                    </a>
+                  </p>
+                  <p className="mt-1 text-sm">
+                    <span className="text-white/40">Pitch PDF : </span>
+                    <span className="text-white/80">📄 {s.pitchFilename}</span>
+                    {s.pitchSize && <span className="text-white/40"> ({s.pitchSize})</span>}
+                  </p>
+                </div>
+                <div className="shrink-0 text-right text-xs text-white/50">
+                  Soumis le<br />
+                  {new Date(s.submittedAt).toLocaleString('fr-FR')}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {teamsWithoutSubmission.length > 0 && (
+        <div className="mt-10">
+          <h3 className="mb-3 text-xs uppercase tracking-widest text-red-400/80">
+            Équipes sans livrable ({teamsWithoutSubmission.length})
+          </h3>
+          <div className="grid gap-2 md:grid-cols-3">
+            {teamsWithoutSubmission.map((t) => (
+              <div key={t.id} className="border border-red-500/20 bg-red-500/[0.03] px-4 py-2 text-sm">
+                {t.displayName}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Stat({ label, value }) {
+  return (
+    <div className="border border-white/10 bg-white/[0.02] p-4">
+      <p className="text-[0.6rem] uppercase tracking-[0.3em] text-white/40">{label}</p>
+      <p className="mt-2 font-poppins text-2xl font-bold text-enigmia-gold">{value}</p>
+    </div>
+  );
 }

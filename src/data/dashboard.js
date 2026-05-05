@@ -1,18 +1,18 @@
 // Données mockées pour le dashboard - à remplacer par l'API plus tard
 
 export const ROOMS = [
-  { id: 'chill', name: 'Chill Room', icon: '☕', desc: 'Détente, brainstorming léger' },
-  { id: 'tech', name: 'Tech Room', icon: '⚙️', desc: 'Aide technique, debug' },
-  { id: 'dev', name: 'Dev Room', icon: '💻', desc: 'Sessions de code, pair programming' },
-  { id: 'main', name: 'Main Room', icon: '🎯', desc: 'Présentation, pitch, démo' },
+  { id: 'chill', name: 'Chill Room', icon: '🛋️', desc: 'Détente, jeux, gain de points techniques' },
+  { id: 'creative', name: 'Creative Room', icon: '🎨', desc: 'Idéation, prototypage, créativité' },
+  { id: 'tech', name: 'Tech Room', icon: '💻', desc: 'Échanges avec les mentors' },
+  { id: 'pitch', name: 'Pitch Room', icon: '🎤', desc: 'Travail et entraînement au pitch' },
 ];
 
-export const COST_PER_BOOKING = 300; // points pour un RDV de 15 min
+export const COST_PER_BOOKING = 20; // points techniques pour un RDV de 15 min (cf. règlement)
 
 export const MOCK_TEAMS = [
-  { id: 't1', name: 'cipher-squad', password: 'demo', displayName: 'The Cipher Squad', points: 1200 },
-  { id: 't2', name: 'neural-knights', password: 'demo', displayName: 'Neural Knights', points: 800 },
-  { id: 't3', name: 'data-pirates', password: 'demo', displayName: 'Data Pirates', points: 450 },
+  { id: 't1', name: 'cipher-squad', password: 'demo', displayName: 'The Cipher Squad', points: 60 },
+  { id: 't2', name: 'neural-knights', password: 'demo', displayName: 'Neural Knights', points: 40 },
+  { id: 't3', name: 'data-pirates', password: 'demo', displayName: 'Data Pirates', points: 25 },
 ];
 
 export const MOCK_MENTORS = [
@@ -110,6 +110,7 @@ const LS_KEYS = {
   SLOTS: 'enigmia.slots',
   DOCUMENTS: 'enigmia.documents',
   EVENTS: 'enigmia.events',
+  SUBMISSIONS: 'enigmia.submissions',
 };
 
 export function getStoredTeams() {
@@ -173,6 +174,35 @@ export function setStoredEvents(events) {
   localStorage.setItem(LS_KEYS.EVENTS, JSON.stringify(events));
 }
 
+export function getStoredSubmissions() {
+  const raw = localStorage.getItem(LS_KEYS.SUBMISSIONS);
+  return raw ? JSON.parse(raw) : [];
+}
+
+export function setStoredSubmissions(subs) {
+  localStorage.setItem(LS_KEYS.SUBMISSIONS, JSON.stringify(subs));
+}
+
+export function submitDeliverable({ teamId, projectUrl, pitchFilename, pitchSize }) {
+  const subs = getStoredSubmissions();
+  const existing = subs.findIndex((s) => s.teamId === teamId);
+  const submission = {
+    id: existing >= 0 ? subs[existing].id : `s-${Date.now()}`,
+    teamId,
+    projectUrl,
+    pitchFilename,
+    pitchSize,
+    submittedAt: new Date().toISOString(),
+  };
+  if (existing >= 0) {
+    subs[existing] = submission;
+  } else {
+    subs.push(submission);
+  }
+  setStoredSubmissions(subs);
+  return submission;
+}
+
 export function getAuth() {
   const raw = localStorage.getItem(LS_KEYS.AUTH);
   return raw ? JSON.parse(raw) : null;
@@ -199,7 +229,7 @@ export function mockLogin(username, password) {
 
 /* ─── Booking ─── */
 
-export function bookSlot({ teamId, slotId, room }) {
+export function bookSlot({ teamId, slotId, room, expertise, problem }) {
   const teams = getStoredTeams();
   const slots = getStoredSlots();
   const bookings = getStoredBookings();
@@ -211,7 +241,7 @@ export function bookSlot({ teamId, slotId, room }) {
     return { success: false, error: 'Slot indisponible' };
   }
   if (team.points < COST_PER_BOOKING) {
-    return { success: false, error: 'Solde de points insuffisant' };
+    return { success: false, error: 'Solde de points techniques insuffisant' };
   }
 
   team.points -= COST_PER_BOOKING;
@@ -223,6 +253,8 @@ export function bookSlot({ teamId, slotId, room }) {
     mentorId: slot.mentorId,
     slotId,
     room,
+    expertise: expertise || '',
+    problem: problem || '',
     date: slot.date,
     time: slot.time,
     duration: slot.duration,

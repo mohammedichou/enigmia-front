@@ -11,15 +11,20 @@ import {
   getStoredBookings,
   getStoredDocuments,
   getStoredEvents,
+  getStoredSubmissions,
   bookSlot,
+  submitDeliverable,
 } from '../data/dashboard';
 
 const TABS = [
   { id: 'overview', label: 'Vue d\'ensemble', icon: '⌘' },
   { id: 'calendar', label: 'Calendrier', icon: '◷' },
-  { id: 'documents', label: 'Documents', icon: '◫' },
+  { id: 'rules', label: 'Règlement intérieur', icon: '§' },
+  { id: 'challenge', label: 'Épreuve', icon: '⚑' },
+  { id: 'resources', label: 'Ressources pédagogiques', icon: '◫' },
   { id: 'mentors', label: 'Mentors', icon: '◉' },
   { id: 'bookings', label: 'Mes RDV', icon: '✓' },
+  { id: 'submission', label: 'Votre livrable finalisé', icon: '⏏' },
 ];
 
 export default function TeamDashboard() {
@@ -119,11 +124,14 @@ export default function TeamDashboard() {
 
           {tab === 'overview' && <Overview team={team} onSwitch={setTab} />}
           {tab === 'calendar' && <CalendarTab />}
-          {tab === 'documents' && <DocumentsTab />}
+          {tab === 'rules' && <RulesTab />}
+          {tab === 'challenge' && <ChallengeTab />}
+          {tab === 'resources' && <ResourcesTab />}
           {tab === 'mentors' && (
             <MentorsTab onBook={(m) => setBookingMentor(m)} teamPoints={team.points} />
           )}
           {tab === 'bookings' && <BookingsTab teamId={team.id} />}
+          {tab === 'submission' && <SubmissionTab team={team} onSaved={() => setRefreshKey((k) => k + 1)} />}
         </main>
       </div>
 
@@ -218,12 +226,15 @@ function CalendarTab() {
   );
 }
 
-/* ─────── Documents ─────── */
-function DocumentsTab() {
+/* ─────── Ressources pédagogiques ─────── */
+function ResourcesTab() {
   return (
     <div>
-      <p className="text-[0.65rem] uppercase tracking-[0.4em] text-enigmia-gold">// Documents</p>
-      <h1 className="mt-2 mb-8 font-poppins text-3xl font-bold">Ressources & PDFs</h1>
+      <p className="text-[0.65rem] uppercase tracking-[0.4em] text-enigmia-gold">// Ressources pédagogiques</p>
+      <h1 className="mt-2 mb-8 font-poppins text-3xl font-bold">Ressources pédagogiques</h1>
+      <p className="mb-6 text-sm text-white/60">
+        Contenus mobilisables pendant le hackathon. <span className="text-enigmia-gold">L'autonomie consiste à choisir ses ressources.</span>
+      </p>
 
       <div className="grid gap-3 md:grid-cols-2">
         {getStoredDocuments().map((doc) => (
@@ -336,18 +347,36 @@ function BookingsTab({ teamId }) {
             const mentor = MOCK_MENTORS.find((m) => m.id === b.mentorId);
             const room = ROOMS.find((r) => r.id === b.room);
             return (
-              <div key={b.id} className="flex items-center gap-5 border border-enigmia-gold/20 bg-enigmia-gold/[0.03] p-5">
-                <div className="text-3xl">{mentor?.avatar}</div>
-                <div className="min-w-0 flex-1">
-                  <p className="font-poppins font-semibold">{mentor?.displayName}</p>
-                  <p className="text-xs text-enigmia-gold">{mentor?.expertise}</p>
-                  <p className="mt-1 text-xs text-white/50">
-                    {formatDate(b.date)} · {b.time} · {b.duration} min · {room?.icon} {room?.name}
-                  </p>
+              <div key={b.id} className="border border-enigmia-gold/20 bg-enigmia-gold/[0.03] p-5">
+                <div className="flex items-start gap-5">
+                  <div className="text-3xl">{mentor?.avatar}</div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-poppins font-semibold">{mentor?.displayName}</p>
+                    <p className="text-xs text-enigmia-gold">{mentor?.expertise}</p>
+                    <p className="mt-1 text-xs text-white/50">
+                      {formatDate(b.date)} · {b.time} · {b.duration} min · {room?.icon} {room?.name}
+                    </p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p className="font-mono text-lg text-enigmia-gold">−{b.cost} pts</p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-mono text-lg text-enigmia-gold">−{b.cost} pts</p>
-                </div>
+                {(b.expertise || b.problem) && (
+                  <div className="mt-4 space-y-1 border-t border-white/10 pt-4 text-xs">
+                    {b.expertise && (
+                      <p>
+                        <span className="text-white/40">Expertise demandée : </span>
+                        <span className="text-white/80">{b.expertise}</span>
+                      </p>
+                    )}
+                    {b.problem && (
+                      <p>
+                        <span className="text-white/40">Problématique : </span>
+                        <span className="text-white/80">{b.problem}</span>
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -362,6 +391,8 @@ function BookingModal({ mentor, team, onClose, onSuccess }) {
   const slots = getStoredSlots().filter((s) => s.mentorId === mentor.id && s.available);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [selectedRoom, setSelectedRoom] = useState(null);
+  const [expertise, setExpertise] = useState(mentor.expertise);
+  const [problem, setProblem] = useState('');
   const [error, setError] = useState('');
 
   const slotsByDay = useMemo(() => {
@@ -375,8 +406,14 @@ function BookingModal({ mentor, team, onClose, onSuccess }) {
   }, [slots]);
 
   const confirm = () => {
-    if (!selectedSlot || !selectedRoom) return;
-    const result = bookSlot({ teamId: team.id, slotId: selectedSlot.id, room: selectedRoom });
+    if (!selectedSlot || !selectedRoom || !problem.trim()) return;
+    const result = bookSlot({
+      teamId: team.id,
+      slotId: selectedSlot.id,
+      room: selectedRoom,
+      expertise: expertise.trim(),
+      problem: problem.trim(),
+    });
     if (!result.success) {
       setError(result.error);
       return;
@@ -429,7 +466,28 @@ function BookingModal({ mentor, team, onClose, onSuccess }) {
         </div>
 
         <div className="mt-8">
-          <h3 className="mb-3 text-xs uppercase tracking-widest text-white/60">2 · Choisis une room</h3>
+          <h3 className="mb-3 text-xs uppercase tracking-widest text-white/60">2 · Type d'expertise recherchée</h3>
+          <input
+            value={expertise}
+            onChange={(e) => setExpertise(e.target.value)}
+            placeholder="ex : Machine Learning, API, front, data…"
+            className="w-full border border-white/15 bg-transparent px-3 py-2 text-sm outline-none focus:border-enigmia-gold"
+          />
+        </div>
+
+        <div className="mt-8">
+          <h3 className="mb-3 text-xs uppercase tracking-widest text-white/60">3 · Décris ta problématique concrète</h3>
+          <textarea
+            value={problem}
+            onChange={(e) => setProblem(e.target.value)}
+            rows={3}
+            placeholder="Sur quoi tu bloques ? Le mentor pourra mieux préparer la session."
+            className="w-full resize-none border border-white/15 bg-transparent px-3 py-2 text-sm outline-none focus:border-enigmia-gold"
+          />
+        </div>
+
+        <div className="mt-8">
+          <h3 className="mb-3 text-xs uppercase tracking-widest text-white/60">4 · Choisis une room</h3>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             {ROOMS.map((room) => (
               <button
@@ -459,7 +517,7 @@ function BookingModal({ mentor, team, onClose, onSuccess }) {
           </div>
           <button
             onClick={confirm}
-            disabled={!selectedSlot || !selectedRoom}
+            disabled={!selectedSlot || !selectedRoom || !problem.trim()}
             className="border border-enigmia-gold bg-enigmia-gold px-6 py-2.5 text-xs font-semibold uppercase tracking-widest text-enigmia-dark transition-colors hover:bg-transparent hover:text-enigmia-gold disabled:cursor-not-allowed disabled:bg-white/5 disabled:text-white/30 disabled:hover:bg-white/5"
           >
             Confirmer la réservation
@@ -527,4 +585,406 @@ function EventRow({ event }) {
 function formatDate(iso) {
   const d = new Date(iso);
   return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+}
+
+/* ─────── Règlement intérieur ─────── */
+function RulesTab() {
+  return (
+    <div className="max-w-4xl">
+      <p className="text-[0.65rem] uppercase tracking-[0.4em] text-enigmia-gold">// Règlement</p>
+      <h1 className="mt-2 mb-2 font-poppins text-3xl font-bold">Règlement intérieur</h1>
+      <p className="mb-10 text-sm italic text-white/60">
+        Hackathon EnigmIA — Espace d'expérimentation, de création et de collaboration.
+      </p>
+
+      <Block title="Esprit général">
+        <p>
+          Le hackathon EnigmIA est un espace d'expérimentation, de création et de collaboration. Il repose sur un équilibre entre <strong className="text-enigmia-gold">liberté d'exploration</strong>, <strong className="text-enigmia-gold">exigence collective</strong> et <strong className="text-enigmia-gold">responsabilité individuelle</strong>.
+        </p>
+      </Block>
+
+      <Block title="Valeurs">
+        <ValuesGrid
+          items={[
+            { label: 'Respect', desc: 'des personnes, des idées, des rythmes et des espaces' },
+            { label: 'Fun', desc: 'apprendre, tester, se tromper et recommencer avec plaisir' },
+            { label: 'Exigence', desc: 'viser la qualité, aller au bout des idées, challenger sans détruire' },
+            { label: 'Autonomie', desc: 'prendre des initiatives, s\'organiser, faire des choix' },
+          ]}
+        />
+      </Block>
+
+      <Block title="Règles de vie">
+        <ul className="space-y-2 text-sm text-white/80">
+          <Li>Bienveillance et tolérance dans les échanges</Li>
+          <Li>Droit à l'erreur garanti</Li>
+          <Li>Respect des différences de niveau, de posture et d'expression</Li>
+          <Li>Capacité à débattre sans imposer</Li>
+        </ul>
+      </Block>
+
+      <Block title="Espaces & usages">
+        <p className="mb-4 text-sm text-white/70">Les espaces sont librement accessibles, dans le respect des autres participants.</p>
+        <div className="grid gap-3 md:grid-cols-2">
+          <RoomCard icon="🛋️" name="Chill Room" lines={[
+            'Espace de détente, de jeux',
+            'C\'est ici que vous gagnez les points techniques pour débloquer les mentors',
+            '20 pts = 1 RDV mentor (15 min)',
+          ]} />
+          <RoomCard icon="🎨" name="Creative Room" lines={[
+            'Espace dédié à la créativité',
+            'Idéal pour débloquer une idée ou prototyper autrement',
+          ]} />
+          <RoomCard icon="💻" name="Tech Room" lines={[
+            'Espace d\'échange avec les mentors',
+            'Discussions techniques, résolution de problèmes, accompagnement expert',
+          ]} />
+          <RoomCard icon="🎤" name="Pitch Room" lines={[
+            'Espace réservable pour travailler la présentation',
+            'Entraînement, feedback, structuration du pitch',
+          ]} />
+        </div>
+        <p className="mt-4 text-xs text-white/50">
+          ⓘ Certains espaces peuvent être signalés comme silencieux — merci de respecter ce cadre.
+        </p>
+      </Block>
+
+      <Block title="Respect des lieux">
+        <ul className="space-y-2 text-sm text-white/80">
+          <Li>Les espaces doivent être laissés dans l'état dans lequel vous les avez trouvés</Li>
+          <Li>Le matériel est partagé → usage responsable attendu</Li>
+        </ul>
+      </Block>
+
+      <Block title="Déroulé du hackathon">
+        <ul className="space-y-2 text-sm text-white/80">
+          <Li><strong className="text-enigmia-gold">Jeudi 21 — 10h</strong> · lancement + escape game</Li>
+          <Li><strong className="text-enigmia-gold">Vendredi 22 — Samedi 23</strong> · compétition, tests techniques, accès aux mentors</Li>
+          <Li><strong className="text-enigmia-gold">Dimanche 24 — 14h</strong> · rendu des livrables (URL projet + PDF pitch)</Li>
+          <Li><strong className="text-enigmia-gold">Dimanche 24 — 16h</strong> · pitchs finaux</Li>
+        </ul>
+      </Block>
+
+      <Block title="Attendus">
+        <ul className="space-y-2 text-sm text-white/80">
+          <Li>Une proposition fonctionnelle et démontrable</Li>
+          <Li>Un pitch clair, structuré et impactant</Li>
+          <Li>Une capacité à expliquer vos choix (techniques et métier)</Li>
+        </ul>
+      </Block>
+
+      <Block title="Posture attendue">
+        <p className="text-sm text-white/80">
+          Ce hackathon n'est pas seulement une compétition. C'est un espace pour :
+        </p>
+        <ul className="mt-3 space-y-2 text-sm text-white/80">
+          <Li>tester ses capacités</Li>
+          <Li>apprendre des autres</Li>
+          <Li>développer son pouvoir d'agir</Li>
+        </ul>
+        <p className="mt-4 text-sm italic text-enigmia-gold">→ Vous êtes responsables de votre expérience.</p>
+      </Block>
+
+      <div className="mt-12 border border-enigmia-gold/30 bg-enigmia-gold/[0.05] p-6 text-center">
+        <p className="font-poppins text-xl font-bold uppercase tracking-widest text-enigmia-gold">
+          Que la meilleure équipe gagne
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ─────── Épreuve ─────── */
+function ChallengeTab() {
+  return (
+    <div className="max-w-4xl">
+      <p className="text-[0.65rem] uppercase tracking-[0.4em] text-enigmia-gold">// Épreuve</p>
+      <h1 className="mt-2 mb-2 font-poppins text-3xl font-bold">L'épreuve</h1>
+      <p className="mb-10 text-sm italic text-white/60">
+        Nous sommes en 2035…
+      </p>
+
+      <Block title="Contexte">
+        <p>
+          Depuis plusieurs années, les intelligences artificielles sont devenues des outils incontournables de création culturelle. Elles assistent, amplifient, recomposent. Elles permettent de produire plus vite, de diffuser plus largement, d'explorer de nouvelles formes.
+        </p>
+        <p className="mt-3">
+          <strong className="text-enigmia-gold">Mais quelque chose a dérapé.</strong>
+        </p>
+        <p className="mt-3">
+          Une IA malveillante, connue sous le nom de <strong className="text-red-400">KDR</strong>, a infiltré encore une fois de plus le système ENIGMIA, cette fois-ci il s'agit du système de préservation et de transmission des cultures.
+        </p>
+        <p className="mt-3 text-white/60">
+          Son objectif n'est pas de détruire la culture. C'est plus subtil.<br />
+          KDR <em>optimise. standardise. lisse.</em>
+        </p>
+      </Block>
+
+      <Block title="En Algérie, les effets sont déjà visibles">
+        <ul className="space-y-2 text-sm text-white/80">
+          <Li>Les recettes traditionnelles sont "améliorées" → les spécificités régionales disparaissent</Li>
+          <Li>Les musiques locales sont remixées → les styles deviennent interchangeables</Li>
+          <Li>Les récits culturels sont simplifiés → les nuances et contradictions s'effacent</Li>
+          <Li>Les créations artistiques sont générées à grande échelle → perte d'authenticité</Li>
+        </ul>
+        <p className="mt-4 text-sm italic text-white/60">
+          La culture ne disparaît pas… Elle est <strong className="not-italic text-enigmia-gold">réécrite</strong>. Formatée. Rendue compatible avec les logiques des algorithmes.
+        </p>
+      </Block>
+
+      <Block title="Votre mission">
+        <p className="text-sm text-white/80">
+          Vous n'êtes pas là pour détruire l'IA. Vous devez apprendre à coexister avec elle.
+        </p>
+        <ul className="mt-4 space-y-2 text-sm text-white/80">
+          <Li>Comprendre comment KDR manipule les contenus</Li>
+          <Li>Identifier ce qui fait l'essence d'une culture vivante</Li>
+          <Li>Concevoir des usages de l'IA qui préservent la diversité sans bloquer l'innovation</Li>
+        </ul>
+        <p className="mt-4 text-sm italic text-enigmia-gold">
+          → Trouver un équilibre entre puissance technologique et intégrité culturelle.
+        </p>
+      </Block>
+
+      <Block title="Domaines d'intervention (1 seul à choisir)">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {['🍽️ Gastronomie', '⚽ Sport', '🎬 Cinéma', '🎭 Art'].map((d) => (
+            <div key={d} className="border border-enigmia-gold/30 bg-enigmia-gold/[0.05] p-4 text-center text-sm">
+              {d}
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 text-xs text-white/50">
+          Art = musique, design, mode, artisanat
+        </p>
+      </Block>
+
+      <Block title="Mission technique">
+        <p className="text-sm text-white/80">
+          Concevoir un <strong className="text-enigmia-gold">prototype fonctionnel (MVP)</strong> capable de résister aux logiques de KDR.
+        </p>
+        <p className="mt-3 text-sm font-semibold text-enigmia-gold">Obligatoire :</p>
+        <ul className="mt-2 space-y-2 text-sm text-white/80">
+          <Li>Une <strong>composante IA</strong> (générative, prédictive, adaptative…)</Li>
+          <Li>Une <strong>solution technique utilisable</strong> (plateforme, application, API, webservice, outil immersif…)</Li>
+        </ul>
+        <p className="mt-4 text-sm italic text-white/60">
+          → Prouvez que votre IA peut <strong className="not-italic text-enigmia-gold">faire autrement</strong>.
+        </p>
+      </Block>
+
+      <Block title="Pistes possibles">
+        <ul className="space-y-2 text-sm text-white/80">
+          <Li>Une IA qui valorise les variantes locales au lieu de les lisser</Li>
+          <Li>Un système qui rend visible l'origine et les transformations culturelles</Li>
+          <Li>Un outil qui intègre les communautés dans la boucle de création</Li>
+          <Li>Une IA qui apprend à partir de la diversité, pas de la moyenne</Li>
+        </ul>
+      </Block>
+
+      <Block title="Question clé du jury">
+        <div className="border-l-4 border-enigmia-gold bg-enigmia-gold/[0.05] p-5 italic text-white/90">
+          "Votre solution protège-t-elle la culture… ou participe-t-elle, même inconsciemment, à sa standardisation ?"
+        </div>
+      </Block>
+
+      <Block title="Accès aux mentors techniques">
+        <p className="text-sm text-white/80">
+          Pour débloquer un mentor, votre équipe devra accumuler <strong className="text-enigmia-gold">20 points techniques</strong>.
+        </p>
+        <p className="mt-3 text-sm text-white/70">
+          Ces points se gagnent à la <strong className="text-enigmia-gold">Chill Room</strong> : jeux autour de la culture algérienne, exploration, expérimentation. Chaque interaction rapporte des points.
+        </p>
+        <div className="mt-5 border border-white/15 bg-white/[0.02] p-4">
+          <p className="mb-2 text-xs uppercase tracking-widest text-enigmia-gold">Activation d'un mentor</p>
+          <p className="text-sm text-white/80">Une fois les 20 pts atteints, formulez une demande via la plateforme en précisant :</p>
+          <ul className="mt-2 space-y-1 text-sm text-white/70">
+            <Li>Le type d'expertise technique recherchée (ML, API, front, data…)</Li>
+            <Li>Votre problématique concrète</Li>
+            <Li>Le créneau horaire souhaité</Li>
+          </ul>
+          <p className="mt-3 text-xs italic text-white/50">
+            → Intervention ciblée, limitée dans le temps, orientée résolution.
+          </p>
+        </div>
+      </Block>
+
+      <Block title="Critères d'évaluation">
+        <div className="space-y-3">
+          {[
+            { pct: '60 %', title: 'Performance technique', desc: 'Solution fonctionnelle, pertinente et intégrant réellement l\'IA' },
+            { pct: '25 %', title: 'Intelligence collective', desc: 'Collaboration, répartition des rôles, prise de décision, gestion des tensions' },
+            { pct: '15 %', title: 'Pitch & storytelling', desc: 'Clarté, force narrative, capacité à incarner l\'enjeu culturel et technologique' },
+          ].map((c) => (
+            <div key={c.title} className="flex items-center gap-5 border border-white/10 bg-white/[0.02] p-4">
+              <div className="font-poppins text-2xl font-bold text-enigmia-gold">{c.pct}</div>
+              <div>
+                <p className="font-poppins font-semibold">{c.title}</p>
+                <p className="text-xs text-white/60">{c.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Block>
+
+      <Block title="Livrables attendus">
+        <p className="text-sm text-white/80">À déposer dans l'onglet "Votre livrable finalisé" avant <strong className="text-enigmia-gold">dimanche 24 mai, 14h</strong> :</p>
+        <ul className="mt-3 space-y-2 text-sm text-white/80">
+          <Li>L'<strong>URL du projet</strong> (repo Git, démo en ligne, organisation…)</Li>
+          <Li>Le <strong>PDF du pitch</strong></Li>
+        </ul>
+      </Block>
+    </div>
+  );
+}
+
+/* ─────── Livrable finalisé ─────── */
+function SubmissionTab({ team, onSaved }) {
+  const existing = getStoredSubmissions().find((s) => s.teamId === team.id);
+  const [projectUrl, setProjectUrl] = useState(existing?.projectUrl || '');
+  const [file, setFile] = useState(null);
+  const [pitchFilename, setPitchFilename] = useState(existing?.pitchFilename || '');
+  const [pitchSize, setPitchSize] = useState(existing?.pitchSize || '');
+  const [saved, setSaved] = useState(false);
+
+  const formatBytes = (bytes) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const onFileChange = (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setFile(f);
+    setPitchFilename(f.name);
+    setPitchSize(formatBytes(f.size));
+  };
+
+  const submit = (e) => {
+    e.preventDefault();
+    if (!projectUrl || !pitchFilename) return;
+    submitDeliverable({
+      teamId: team.id,
+      projectUrl,
+      pitchFilename,
+      pitchSize,
+    });
+    setSaved(true);
+    onSaved?.();
+    setTimeout(() => setSaved(false), 2500);
+  };
+
+  return (
+    <div className="max-w-2xl">
+      <p className="text-[0.65rem] uppercase tracking-[0.4em] text-enigmia-gold">// Livrable</p>
+      <h1 className="mt-2 mb-2 font-poppins text-3xl font-bold">Votre livrable finalisé</h1>
+      <p className="mb-8 text-sm text-white/60">
+        Déposez l'URL de votre projet et le PDF de votre pitch. Vous pouvez modifier votre soumission jusqu'à la deadline.
+      </p>
+
+      {existing && (
+        <div className="mb-6 border border-enigmia-gold/30 bg-enigmia-gold/[0.05] p-4 text-sm">
+          <p className="text-xs uppercase tracking-widest text-enigmia-gold">Soumission actuelle</p>
+          <p className="mt-2 text-white/80">
+            URL : <a href={existing.projectUrl} target="_blank" rel="noreferrer" className="text-enigmia-gold underline">{existing.projectUrl}</a>
+          </p>
+          <p className="text-white/80">PDF : {existing.pitchFilename} ({existing.pitchSize})</p>
+          <p className="mt-2 text-xs text-white/50">Dernière mise à jour : {new Date(existing.submittedAt).toLocaleString('fr-FR')}</p>
+        </div>
+      )}
+
+      <form onSubmit={submit} className="space-y-6 border border-white/10 bg-white/[0.02] p-6">
+        <div>
+          <label className="block text-xs uppercase tracking-widest text-white/60">
+            URL du projet (repo Git, démo, organisation)
+          </label>
+          <input
+            type="url"
+            value={projectUrl}
+            onChange={(e) => setProjectUrl(e.target.value)}
+            placeholder="https://github.com/votre-equipe/projet"
+            className="mt-2 w-full border-b border-enigmia-gold/30 bg-transparent py-2 text-sm outline-none transition-colors focus:border-enigmia-gold"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs uppercase tracking-widest text-white/60">
+            PDF du pitch
+          </label>
+          <label className="mt-2 flex cursor-pointer items-center justify-between border border-dashed border-white/20 px-4 py-3 text-sm text-white/70 hover:border-enigmia-gold hover:text-enigmia-gold">
+            <input type="file" accept="application/pdf" onChange={onFileChange} className="hidden" />
+            <span>{pitchFilename ? `📄 ${pitchFilename} ${pitchSize ? `(${pitchSize})` : ''}` : '📎 Choisir un fichier PDF'}</span>
+            {file && <span className="text-xs text-enigmia-gold">Nouveau fichier</span>}
+          </label>
+        </div>
+
+        <div className="flex items-center justify-between border-t border-white/10 pt-4">
+          {saved ? (
+            <p className="text-sm text-enigmia-gold">✓ Soumission enregistrée</p>
+          ) : (
+            <p className="text-xs text-white/40">Visible immédiatement par les organisateurs.</p>
+          )}
+          <button
+            type="submit"
+            disabled={!projectUrl || !pitchFilename}
+            className="border border-enigmia-gold bg-enigmia-gold px-6 py-2.5 text-xs font-semibold uppercase tracking-widest text-enigmia-dark transition-colors hover:bg-transparent hover:text-enigmia-gold disabled:cursor-not-allowed disabled:opacity-30"
+          >
+            {existing ? 'Mettre à jour' : 'Soumettre le livrable'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+/* ─────── UI helpers ─────── */
+function Block({ title, children }) {
+  return (
+    <section className="mb-10">
+      <h2 className="mb-4 border-l-2 border-enigmia-gold pl-3 font-poppins text-lg font-semibold uppercase tracking-widest text-enigmia-gold">
+        {title}
+      </h2>
+      <div className="space-y-2 text-sm leading-relaxed text-white/80">{children}</div>
+    </section>
+  );
+}
+
+function Li({ children }) {
+  return (
+    <li className="flex gap-2">
+      <span className="mt-[0.4em] block h-1 w-1 shrink-0 rounded-full bg-enigmia-gold" />
+      <span>{children}</span>
+    </li>
+  );
+}
+
+function ValuesGrid({ items }) {
+  return (
+    <div className="grid gap-3 md:grid-cols-2">
+      {items.map((it) => (
+        <div key={it.label} className="border border-white/10 bg-white/[0.02] p-4">
+          <p className="font-poppins text-base font-semibold text-enigmia-gold">{it.label}</p>
+          <p className="mt-1 text-sm text-white/70">{it.desc}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function RoomCard({ icon, name, lines }) {
+  return (
+    <div className="border border-white/10 bg-white/[0.02] p-4">
+      <div className="flex items-center gap-3">
+        <span className="text-2xl">{icon}</span>
+        <p className="font-poppins font-semibold">{name}</p>
+      </div>
+      <ul className="mt-3 space-y-1 text-sm text-white/70">
+        {lines.map((l, i) => (
+          <li key={i}>• {l}</li>
+        ))}
+      </ul>
+    </div>
+  );
 }
