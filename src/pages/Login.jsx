@@ -1,23 +1,42 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { mockLogin, setAuth } from '../data/dashboard';
+import { api, setAuth } from '../api';
 
 export default function Login() {
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-    const result = mockLogin(username.trim(), password);
-    if (!result) {
-      setError('Identifiants invalides');
-      return;
+    setError('');
+    setLoading(true);
+    try {
+      const result = await api.auth.login(username.trim(), password);
+      // Format attendu : { token, user: { id, role, displayName, ... } }
+      // Compat : si l'API renvoie directement role/id à la racine, on s'adapte
+      const role = result.user?.role || result.role;
+      const id = result.user?.id || result.user?._id || result.id;
+      const displayName = result.user?.displayName || result.displayName;
+      const token = result.token;
+
+      if (!token || !role) {
+        throw new Error('Réponse de connexion invalide');
+      }
+
+      setAuth({ token, role, id, displayName });
+
+      if (role === 'team') navigate('/team/dashboard');
+      else if (role === 'mentor') navigate('/mentor/dashboard');
+      else if (role === 'admin') navigate('/pro');
+      else throw new Error(`Rôle inconnu : ${role}`);
+    } catch (err) {
+      setError(err.message || 'Identifiants invalides');
+    } finally {
+      setLoading(false);
     }
-    setAuth(result);
-    if (result.role === 'team') navigate('/team/dashboard');
-    else if (result.role === 'mentor') navigate('/mentor/dashboard');
   };
 
   return (
@@ -39,7 +58,7 @@ export default function Login() {
               Connexion <span className="text-enigmia-gold">ENIGMIA</span>
             </h1>
             <p className="mt-3 text-sm text-white/60">
-              Équipes & mentors — accédez à votre tableau de bord
+              Équipes, mentors & organisateurs
             </p>
           </div>
 
@@ -78,23 +97,12 @@ export default function Login() {
 
             <button
               type="submit"
-              className="mt-2 w-full border border-enigmia-gold bg-enigmia-gold py-3 text-xs font-semibold uppercase tracking-[0.3em] text-enigmia-dark transition-colors hover:bg-transparent hover:text-enigmia-gold"
+              disabled={loading}
+              className="mt-2 w-full border border-enigmia-gold bg-enigmia-gold py-3 text-xs font-semibold uppercase tracking-[0.3em] text-enigmia-dark transition-colors hover:bg-transparent hover:text-enigmia-gold disabled:opacity-50"
             >
-              Se connecter
+              {loading ? 'Connexion…' : 'Se connecter'}
             </button>
           </form>
-
-          <div className="mt-6 rounded border border-white/10 bg-white/[0.02] p-4 text-xs text-white/50">
-            <p className="mb-2 font-semibold uppercase tracking-widest text-enigmia-gold">
-              Comptes de démo
-            </p>
-            <p>
-              Équipe : <span className="text-white/80">cipher-squad</span> / <span className="text-white/80">demo</span>
-            </p>
-            <p>
-              Mentor : <span className="text-white/80">sarah-belkacem</span> / <span className="text-white/80">demo</span>
-            </p>
-          </div>
         </div>
       </div>
     </div>

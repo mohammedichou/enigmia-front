@@ -17,7 +17,7 @@ export default function AdminDashboard() {
   const [profilFilter, setProfilFilter] = useState('tous');
 
   // ── CONFIGURATION DE L'API ──
-  const API_URL = 'http://localhost:5001'; // Modifie cette URL pour la production
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
   // ── CONNEXION ──
   const handleLogin = async (e) => {
