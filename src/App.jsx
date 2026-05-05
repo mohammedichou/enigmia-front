@@ -7,6 +7,10 @@ import Home from './pages/Home';
 import InscriptionPage from './pages/Inscription';
 import AdminDashboard from './pages/Admin';
 import EscapeGame from './pages/EscapeGame';
+import Login from './pages/Login';
+import TeamDashboard from './pages/TeamDashboard';
+import MentorDashboard from './pages/MentorDashboard';
+import AdminPro from './pages/AdminPro';
 
 /* ── Custom cursor optimisé avec GSAP ── */
 function Cursor() {
@@ -86,6 +90,10 @@ export default function App() {
         <Route path="/inscription" element={<InscriptionPage />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/escape" element={<EscapeGame />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/team/dashboard" element={<TeamDashboard />} />
+        <Route path="/mentor/dashboard" element={<MentorDashboard />} />
+        <Route path="/pro" element={<AdminPro />} />
       </Routes>
     </div>
   );
