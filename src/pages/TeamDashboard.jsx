@@ -6,6 +6,7 @@ import { api, getAuth, setAuth } from '../api';
 const TABS = [
   { id: 'challenge', label: 'Épreuve', icon: '⚑' },
   { id: 'rules', label: 'Règlement intérieur', icon: '§' },
+  { id: 'chillroom', label: 'Chill Room — Débloquer un mentor', icon: '⚄' },
   { id: 'overview', label: 'Vue d\'ensemble', icon: '⌘' },
   { id: 'calendar', label: 'Calendrier', icon: '◷' },
   { id: 'resources', label: 'Ressources pédagogiques', icon: '◫' },
@@ -117,6 +118,7 @@ export default function TeamDashboard() {
 
           {tab === 'challenge' && <ChallengeTab />}
           {tab === 'rules' && <RulesTab />}
+          {tab === 'chillroom' && <ChillRoomTab />}
           {tab === 'overview' && <Overview team={me} onSwitch={setTab} />}
           {tab === 'calendar' && <CalendarTab />}
           {tab === 'resources' && <ResourcesTab />}
@@ -859,6 +861,124 @@ function ChallengeTab() {
         <ul className="mt-3 space-y-2 text-sm text-white/80">
           <Li>L'<strong>URL du projet</strong> (repo Git, démo en ligne, organisation…)</Li>
           <Li>Le <strong>PDF du pitch</strong></Li>
+        </ul>
+      </Block>
+    </div>
+  );
+}
+
+/* ─────── Chill Room — Débloquer un mentor ─────── */
+function ChillRoomTab() {
+  const bareme = [
+    ['Rubik\'s Cube', 'Résoudre le cube', '3 pts'],
+    ['Code cadenas dates', 'Trouver le bon code', '3 pts'],
+    ['Fléchettes', 'Réussir le défi fixé par l\'animateur', '3 pts'],
+    ['Jeu de dames', 'Gagner une partie', '3 pts'],
+    ['Domino', 'Gagner 3 parties', '5 pts'],
+    ['Mikado', 'Gagner 3 parties', '5 pts'],
+    ['EnigmIA Ciné', 'Répondre correctement à une carte', '1 pt'],
+    ['EnigmIA Musique', 'Répondre correctement à une carte', '1 pt'],
+    ['EnigmIA Foot', 'Réussir le défi Action/Vérité', '1 pt'],
+    ['EnigmIA Fashion', 'Réussir le challenge Memory', '1 pt'],
+  ];
+
+  return (
+    <div className="max-w-4xl">
+      <p className="text-[0.65rem] uppercase tracking-[0.4em] text-enigmia-gold">// Chill Room</p>
+      <h1 className="mt-2 mb-2 font-poppins text-3xl font-bold">Débloque ton mentor technique</h1>
+      <p className="mb-10 text-sm italic text-white/60">
+        Un espace pour souffler, jouer, collaborer… et gagner des points pour débloquer l'accès à un mentor technique pendant le hackathon.
+      </p>
+
+      <Block title="Objectif">
+        <p>
+          Accumuler <strong className="text-enigmia-gold">15 points</strong> pour débloquer :
+        </p>
+        <ul className="mt-3 space-y-2 text-sm text-white/80">
+          <Li>un mentor IA</Li>
+          <Li>un expert technique</Li>
+          <Li>ou un coaching stratégique de 15 minutes</Li>
+        </ul>
+        <p className="mt-3 text-sm text-white/60">
+          Les points se gagnent via des mini-jeux, défis culturels et jeux de société.
+        </p>
+      </Block>
+
+      <Block title="Règles générales">
+        <ul className="space-y-2 text-sm text-white/80">
+          <Li>Les participants peuvent jouer librement pendant les temps d'ouverture de la Chill Room</Li>
+          <Li>Chaque activité permet de gagner un nombre précis de points</Li>
+          <Li>Les points sont validés par un animateur ou un bénévole</Li>
+          <Li>Certains jeux nécessitent plusieurs victoires avant validation</Li>
+          <Li>Le fair-play est obligatoire</Li>
+          <Li>Toute triche entraîne l'annulation des points de l'activité concernée</Li>
+        </ul>
+      </Block>
+
+      <Block title="Barème des points">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-enigmia-gold/30 text-[0.65rem] uppercase tracking-widest text-enigmia-gold">
+                <th className="py-2 pr-4 text-left">Activité</th>
+                <th className="py-2 pr-4 text-left">Condition</th>
+                <th className="py-2 text-right">Points</th>
+              </tr>
+            </thead>
+            <tbody>
+              {bareme.map(([act, cond, pts]) => (
+                <tr key={act} className="border-b border-white/5">
+                  <td className="py-2.5 pr-4 font-poppins font-semibold">{act}</td>
+                  <td className="py-2.5 pr-4 text-white/70">{cond}</td>
+                  <td className="py-2.5 text-right font-mono text-enigmia-gold">{pts}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Block>
+
+      <Block title="Règles des jeux">
+        <div className="grid gap-3 md:grid-cols-2">
+          <RoomCard icon="🧩" name="Rubik's Cube" lines={['Le cube doit être entièrement résolu', 'Temps max : 10 minutes', 'Mélangé par l\'animateur', 'Récompense : 3 points']} />
+          <RoomCard icon="🔒" name="Code Cadenas Dates" lines={['Résoudre une énigme IA & culture', 'Trouver le code du cadenas à 3 chiffres', 'Récompense : 3 points']} />
+          <RoomCard icon="🎯" name="Fléchettes" lines={['3 lancers par participant', 'Score minimum annoncé sur place', 'Récompense : 3 points']} />
+          <RoomCard icon="♟️" name="Jeu de Dames" lines={['Partie classique', 'La victoire rapporte les points', 'Récompense : 3 points']} />
+          <RoomCard icon="🁢" name="Domino" lines={['Format rapide', 'Remporter 3 parties pour valider', 'Récompense : 5 points']} />
+          <RoomCard icon="🥢" name="Mikado" lines={['Jeu individuel ou en duel', 'Remporter 3 parties pour valider', 'Récompense : 5 points']} />
+          <RoomCard icon="⚽" name="EnigmIA Foot" lines={['Format : Action / Vérité', 'Culture football, anecdotes, IA & stats sportives', 'Défi réussi = 1 point']} />
+          <RoomCard icon="👗" name="EnigmIA Fashion" lines={['Format : Memory', 'Paires : mode algérienne, motifs traditionnels, IA & design', 'Challenge réussi = 1 point']} />
+        </div>
+      </Block>
+
+      <Block title="Débloquer un mentor">
+        <p className="text-sm text-white/80">À partir de <strong className="text-enigmia-gold">15 points</strong>, une équipe peut :</p>
+        <ul className="mt-3 space-y-2 text-sm text-white/80">
+          <Li>demander un mentor technique</Li>
+          <Li>obtenir une aide stratégique</Li>
+          <Li>débloquer un coaching IA</Li>
+          <Li>ou demander une revue de prototype</Li>
+        </ul>
+        <p className="mt-4 text-sm italic text-enigmia-gold">
+          → Les points sont consommés lors de l'utilisation du mentor.
+        </p>
+      </Block>
+
+      <Block title="Esprit de la Chill Room">
+        <p className="text-sm text-white/80">
+          La Chill Room n'est pas seulement un espace de détente. C'est aussi :
+        </p>
+        <ul className="mt-3 space-y-2 text-sm text-white/80">
+          <Li>un laboratoire social</Li>
+          <Li>un espace de rencontre</Li>
+          <Li>un lieu d'entraide</Li>
+          <Li>et une autre manière d'explorer l'IA à travers le jeu et la culture</Li>
+        </ul>
+        <p className="mt-4 text-sm text-white/80">Le but n'est pas uniquement de gagner, mais :</p>
+        <ul className="mt-3 space-y-2 text-sm text-white/80">
+          <Li>de créer du lien</Li>
+          <Li>de stimuler la curiosité</Li>
+          <Li>et de faire émerger des idées inattendues</Li>
         </ul>
       </Block>
     </div>
