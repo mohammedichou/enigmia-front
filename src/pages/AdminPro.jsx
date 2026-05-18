@@ -374,6 +374,15 @@ function MentorsTab() {
     catch (e) { alert(e.message); }
   };
 
+  const deleteMentor = async (id, name) => {
+    if (!confirm(`Supprimer le mentor "${name}" ? Cela supprimera ses créneaux et annulera ses RDV.`)) return;
+    try {
+      await api.mentors.delete(id);
+      if (selected === id) setSelected(null);
+      refreshMentors();
+    } catch (e) { alert(e.message); }
+  };
+
   return (
     <div>
       <div className="mb-6">
@@ -394,13 +403,27 @@ function MentorsTab() {
       </details>
 
       <div className="grid gap-3 md:grid-cols-5">
-        {mentors.map((m) => (
-          <button key={m._id || m.id} onClick={() => setSelected(m._id || m.id)} className={`border p-4 text-left transition-colors ${selected === (m._id || m.id) ? 'border-enigmia-gold bg-enigmia-gold/10' : 'border-white/10 bg-white/[0.02] hover:border-enigmia-gold/40'}`}>
-            <div className="text-2xl">{m.avatar || '👤'}</div>
-            <p className="mt-2 text-sm font-semibold">{m.displayName}</p>
-            <p className="text-[0.65rem] uppercase tracking-widest text-enigmia-gold">{m.expertise}</p>
-          </button>
-        ))}
+        {mentors.map((m) => {
+          const mid = m._id || m.id;
+          return (
+            <div
+              key={mid}
+              onClick={() => setSelected(mid)}
+              className={`relative cursor-pointer border p-4 transition-colors ${selected === mid ? 'border-enigmia-gold bg-enigmia-gold/10' : 'border-white/10 bg-white/[0.02] hover:border-enigmia-gold/40'}`}
+            >
+              <button
+                onClick={(e) => { e.stopPropagation(); deleteMentor(mid, m.displayName); }}
+                className="absolute right-2 top-2 text-xs text-red-400/60 hover:text-red-400"
+                title="Supprimer ce mentor"
+              >
+                ✕
+              </button>
+              <div className="text-2xl">{m.avatar || '👤'}</div>
+              <p className="mt-2 text-sm font-semibold">{m.displayName}</p>
+              <p className="text-[0.65rem] uppercase tracking-widest text-enigmia-gold">{m.expertise}</p>
+            </div>
+          );
+        })}
       </div>
 
       {selected && (
