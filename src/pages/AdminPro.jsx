@@ -114,6 +114,16 @@ function TeamsTab() {
     catch (e) { alert(e.message); }
   };
 
+  const changePassword = async (id, name) => {
+    const pwd = prompt(`Nouveau mot de passe pour "${name}" :`);
+    if (!pwd) return;
+    if (pwd.length < 4) { alert('4 caractères minimum.'); return; }
+    try {
+      await api.teams.update(id, { password: pwd });
+      alert('Mot de passe mis à jour ✓');
+    } catch (e) { alert(e.message); }
+  };
+
   return (
     <div>
       <div className="mb-6">
@@ -160,7 +170,10 @@ function TeamsTab() {
                     </div>
                   </td>
                   <td className="px-3 py-3 text-right">
-                    <button onClick={() => deleteTeam(t._id || t.id)} className="text-xs text-red-400/70 hover:text-red-400">Supprimer</button>
+                    <div className="flex justify-end gap-3">
+                      <button onClick={() => changePassword(t._id || t.id, t.displayName)} className="text-xs text-white/50 hover:text-enigmia-gold">🔑 Mot de passe</button>
+                      <button onClick={() => deleteTeam(t._id || t.id)} className="text-xs text-red-400/70 hover:text-red-400">Supprimer</button>
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -74,6 +74,8 @@ export const api = {
 
   /* ───── Escape game ───── */
   escape: {
+    register: ({ teamName, password }) =>
+      apiFetch('/api/escape/register', json('POST')({ teamName, password })),
     submitScore: ({ teamName, durationMs }) =>
       apiFetch('/api/escape/scores', json('POST')({ teamName, durationMs })),
     scores: () => apiFetch('/api/escape/scores'),

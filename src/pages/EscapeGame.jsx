@@ -262,7 +262,28 @@ function HackScreen({ onDone }) {
 /* ÉCRAN 1 — WELCOME                           */
 /* ─────────────────────────────────────────── */
 function WelcomeScreen({ teamName, setTeamName, onNext }) {
-  const canSubmit = teamName.trim().length >= 2;
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const canSubmit = teamName.trim().length >= 2 && password.trim().length >= 4;
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!canSubmit || loading) return;
+    setLoading(true);
+    setError('');
+    try {
+      await api.escape.register({
+        teamName: teamName.trim(),
+        password: password.trim(),
+      });
+      onNext();
+    } catch (err) {
+      setError(err.message || 'Impossible de créer l\'équipe');
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="w-full max-w-xl text-center animate-fade-up">
@@ -273,17 +294,12 @@ function WelcomeScreen({ teamName, setTeamName, onNext }) {
         Bienvenue dans <span className="text-enigmia-gold">ENIGMIA</span>
       </h1>
       <p className="mx-auto mt-6 max-w-md font-inter text-sm text-white/70">
-        Votre mission : déchiffrer le code secret pour accéder au hackathon.
+        Créez votre équipe pour lancer la mission. Ces identifiants vous serviront
+        ensuite à accéder à l'épreuve du hackathon.
       </p>
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (canSubmit) onNext();
-        }}
-        className="mx-auto mt-12 max-w-md"
-      >
-        <label className="block text-left font-inter text-xs uppercase tracking-widest text-white/50">
+      <form onSubmit={handleSubmit} className="mx-auto mt-10 max-w-md text-left">
+        <label className="block font-inter text-xs uppercase tracking-widest text-white/50">
           Nom de l'équipe
         </label>
         <input
@@ -294,13 +310,36 @@ function WelcomeScreen({ teamName, setTeamName, onNext }) {
           className="mt-2 w-full border-b border-enigmia-gold/40 bg-transparent py-3 font-poppins text-2xl text-white outline-none transition-colors placeholder:text-white/20 focus:border-enigmia-gold"
           placeholder="The Cipher Squad"
         />
-        <button
-          type="submit"
-          disabled={!canSubmit}
-          className="mt-10 inline-block border border-enigmia-gold px-8 py-3 font-inter text-xs uppercase tracking-[0.3em] text-enigmia-gold transition-all duration-300 hover:bg-enigmia-gold hover:text-enigmia-dark disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-enigmia-gold"
-        >
-          Lancer la mission →
-        </button>
+
+        <label className="mt-8 block font-inter text-xs uppercase tracking-widest text-white/50">
+          Mot de passe de l'équipe
+        </label>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="mt-2 w-full border-b border-enigmia-gold/40 bg-transparent py-3 font-poppins text-2xl text-white outline-none transition-colors placeholder:text-white/20 focus:border-enigmia-gold"
+          placeholder="••••••"
+        />
+        <p className="mt-2 font-inter text-[0.65rem] text-white/40">
+          Min. 4 caractères. À conserver — c'est avec ça que vous vous connecterez à l'épreuve.
+        </p>
+
+        {error && (
+          <p className="mt-4 font-inter text-xs uppercase tracking-widest text-red-400">
+            {error}
+          </p>
+        )}
+
+        <div className="text-center">
+          <button
+            type="submit"
+            disabled={!canSubmit || loading}
+            className="mt-10 inline-block border border-enigmia-gold px-8 py-3 font-inter text-xs uppercase tracking-[0.3em] text-enigmia-gold transition-all duration-300 hover:bg-enigmia-gold hover:text-enigmia-dark disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-enigmia-gold"
+          >
+            {loading ? 'Création…' : 'Lancer la mission →'}
+          </button>
+        </div>
       </form>
     </div>
   );
