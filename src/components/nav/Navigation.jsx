@@ -68,13 +68,21 @@ export default function Navigation() {
             ))}
           </ul>
 
-          {/* Bouton Desktop */}
-          <Link
-            to="/inscription"
-            className="hidden border border-enigmia-gold bg-enigmia-gold/5 px-6 py-2.5 font-inter text-[0.75rem] font-bold uppercase tracking-[0.15em] text-enigmia-gold transition-all duration-300 hover:bg-enigmia-gold hover:text-enigmia-dark md:block"
-          >
-            Je participe
-          </Link>
+          {/* Boutons Desktop */}
+          <div className="hidden items-center gap-3 md:flex">
+            <Link
+              to="/classement"
+              className="font-inter text-[0.75rem] font-bold uppercase tracking-[0.15em] text-white/60 transition-colors hover:text-enigmia-gold"
+            >
+              Classement
+            </Link>
+            <Link
+              to="/inscription"
+              className="border border-enigmia-gold bg-enigmia-gold/5 px-6 py-2.5 font-inter text-[0.75rem] font-bold uppercase tracking-[0.15em] text-enigmia-gold transition-all duration-300 hover:bg-enigmia-gold hover:text-enigmia-dark"
+            >
+              Je participe
+            </Link>
+          </div>
 
           {/* Bouton Hamburger Mobile */}
           <button
@@ -108,6 +116,15 @@ export default function Navigation() {
               </a>
             </li>
           ))}
+          <li className="mobile-link overflow-hidden">
+            <Link
+              to="/classement"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="block font-poppins text-3xl font-bold tracking-widest text-white transition-colors hover:text-enigmia-gold"
+            >
+              Classement
+            </Link>
+          </li>
           <li className="mobile-link mt-8 w-full max-w-[250px]">
             <a
               href="#inscription"

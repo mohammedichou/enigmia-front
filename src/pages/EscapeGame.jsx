@@ -1,5 +1,29 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { api } from '../api';
+
+function formatChrono(ms) {
+  if (ms == null) return '00:00.0';
+  const totalSec = Math.floor(ms / 1000);
+  const min = String(Math.floor(totalSec / 60)).padStart(2, '0');
+  const sec = String(totalSec % 60).padStart(2, '0');
+  const tenth = Math.floor((ms % 1000) / 100);
+  return `${min}:${sec}.${tenth}`;
+}
+
+function Chrono({ startedAt }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const i = setInterval(() => setNow(Date.now()), 100);
+    return () => clearInterval(i);
+  }, []);
+  const elapsed = startedAt ? now - startedAt : 0;
+  return (
+    <div className="fixed left-1/2 top-4 z-40 -translate-x-1/2 border border-enigmia-gold/40 bg-enigmia-dark/80 px-4 py-1.5 font-mono text-lg tracking-widest text-enigmia-gold backdrop-blur-sm">
+      ⏱ {formatChrono(elapsed)}
+    </div>
+  );
+}
 
 // Mapping de chiffrement façon Enigma
 const CIPHER = { 0: 6, 1: 2, 2: 1, 3: 9, 4: 3, 5: 2, 6: 4, 7: 5, 8: 0, 9: 8 };
@@ -31,6 +55,25 @@ export default function EscapeGame() {
   const [teamName, setTeamName] = useState('');
   const [input, setInput] = useState('');
   const [error, setError] = useState(false);
+  const [startedAt, setStartedAt] = useState(null);
+  const [durationMs, setDurationMs] = useState(null);
+  const submittedRef = useRef(false);
+
+  const showChrono = [
+    STEPS.CODE1, STEPS.CODE2, STEPS.CODE3, STEPS.CIPHER, STEPS.FINAL,
+  ].includes(step);
+
+  const finish = () => {
+    const d = startedAt ? Date.now() - startedAt : null;
+    setDurationMs(d);
+    setStep(STEPS.END);
+    if (!submittedRef.current && d != null && teamName.trim()) {
+      submittedRef.current = true;
+      api.escape
+        .submitScore({ teamName: teamName.trim(), durationMs: d })
+        .catch(() => {}); // échec silencieux (l'écran final s'affiche quand même)
+    }
+  };
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-enigmia-dark font-inter text-white">
@@ -47,6 +90,8 @@ export default function EscapeGame() {
         × Quitter
       </Link>
 
+      {showChrono && <Chrono startedAt={startedAt} />}
+
       <div className="relative z-10 flex min-h-screen items-center justify-center px-6 py-12">
         {step === STEPS.HACK && <HackScreen onDone={() => setStep(STEPS.WELCOME)} />}
 
@@ -57,6 +102,7 @@ export default function EscapeGame() {
             onNext={() => {
               setInput('');
               setError(false);
+              setStartedAt(Date.now());
               setStep(STEPS.CODE1);
             }}
           />
@@ -138,12 +184,12 @@ export default function EscapeGame() {
             onSuccess={() => {
               setInput('');
               setError(false);
-              setStep(STEPS.END);
+              finish();
             }}
           />
         )}
 
-        {step === STEPS.END && <EndScreen teamName={teamName} />}
+        {step === STEPS.END && <EndScreen teamName={teamName} durationMs={durationMs} />}
       </div>
     </div>
   );
@@ -482,7 +528,7 @@ function FinalCodeScreen({ input, setInput, error, setError, onSuccess }) {
 /* ─────────────────────────────────────────── */
 /* ÉCRAN FINAL — RÉVÉLATION                    */
 /* ─────────────────────────────────────────── */
-function EndScreen({ teamName }) {
+function EndScreen({ teamName, durationMs }) {
   const [phase, setPhase] = useState(0);
 
   useEffect(() => {
@@ -522,18 +568,35 @@ function EndScreen({ teamName }) {
           <p className="mt-3 font-poppins text-3xl font-bold text-enigmia-gold md:text-4xl">
             Votre défi commence ici.
           </p>
+          {durationMs != null && (
+            <div className="mt-8 inline-block border border-enigmia-gold/40 bg-enigmia-gold/[0.05] px-6 py-3">
+              <p className="font-inter text-[0.6rem] uppercase tracking-[0.3em] text-white/50">
+                Temps de résolution
+              </p>
+              <p className="mt-1 font-mono text-3xl text-enigmia-gold">
+                {formatChrono(durationMs)}
+              </p>
+            </div>
+          )}
           {teamName && (
-            <p className="mt-8 font-inter text-xs uppercase tracking-[0.3em] text-white/50">
-              Bonne chance, équipe <span className="text-enigmia-gold">{teamName}</span>
+            <p className="mt-6 font-inter text-xs uppercase tracking-[0.3em] text-white/50">
+              Bravo, équipe <span className="text-enigmia-gold">{teamName}</span> — score enregistré
             </p>
           )}
-          <a
-            href="#"
-            onClick={(e) => e.preventDefault()}
-            className="mt-12 inline-block border border-enigmia-gold bg-enigmia-gold px-10 py-4 font-inter text-xs font-semibold uppercase tracking-[0.3em] text-enigmia-dark transition-all duration-300 hover:bg-transparent hover:text-enigmia-gold"
-          >
-            Recevoir l'épreuve →
-          </a>
+          <div className="mt-12 flex flex-wrap items-center justify-center gap-4">
+            <Link
+              to="/classement"
+              className="inline-block border border-enigmia-gold bg-enigmia-gold px-8 py-4 font-inter text-xs font-semibold uppercase tracking-[0.3em] text-enigmia-dark transition-all duration-300 hover:bg-transparent hover:text-enigmia-gold"
+            >
+              Voir le classement →
+            </Link>
+            <Link
+              to="/login"
+              className="inline-block border border-enigmia-gold/40 px-8 py-4 font-inter text-xs font-semibold uppercase tracking-[0.3em] text-enigmia-gold transition-all duration-300 hover:bg-enigmia-gold hover:text-enigmia-dark"
+            >
+              Accéder à l'épreuve →
+            </Link>
+          </div>
         </div>
       )}
     </div>

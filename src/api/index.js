@@ -72,6 +72,21 @@ export const api = {
     cancel: (id) => apiFetch(`/api/admin/bookings/${id}`, { method: 'DELETE' }),
   },
 
+  /* ───── Escape game ───── */
+  escape: {
+    submitScore: ({ teamName, durationMs }) =>
+      apiFetch('/api/escape/scores', json('POST')({ teamName, durationMs })),
+    scores: () => apiFetch('/api/escape/scores'),
+  },
+
+  /* ───── Leaderboard & résultats (public) ───── */
+  leaderboard: {
+    teams: () => apiFetch('/api/leaderboard'),
+  },
+  results: {
+    get: () => apiFetch('/api/results'),
+  },
+
   /* ───── Settings (global) ───── */
   settings: {
     get: () => apiFetch('/api/settings'),

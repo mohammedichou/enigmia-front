@@ -11,6 +11,7 @@ import Login from './pages/Login';
 import TeamDashboard from './pages/TeamDashboard';
 import MentorDashboard from './pages/MentorDashboard';
 import AdminPro from './pages/AdminPro';
+import Leaderboard from './pages/Leaderboard';
 
 /* ── Custom cursor optimisé avec GSAP ── */
 function Cursor() {
@@ -94,6 +95,7 @@ export default function App() {
         <Route path="/team/dashboard" element={<TeamDashboard />} />
         <Route path="/mentor/dashboard" element={<MentorDashboard />} />
         <Route path="/pro" element={<AdminPro />} />
+        <Route path="/classement" element={<Leaderboard />} />
       </Routes>
     </div>
   );
