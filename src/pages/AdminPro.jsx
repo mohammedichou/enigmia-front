@@ -9,6 +9,7 @@ const TABS = [
   { id: 'events', label: 'Calendrier' },
   { id: 'mentors', label: 'Mentors & Slots' },
   { id: 'submissions', label: 'Livrables' },
+  { id: 'settings', label: 'Paramètres' },
 ];
 
 export default function AdminPro() {
@@ -69,6 +70,7 @@ export default function AdminPro() {
         {tab === 'events' && <EventsTab />}
         {tab === 'mentors' && <MentorsTab />}
         {tab === 'submissions' && <SubmissionsTab />}
+        {tab === 'settings' && <SettingsTab />}
       </main>
     </div>
   );
@@ -528,6 +530,99 @@ function Stat({ label, value }) {
     <div className="border border-white/10 bg-white/[0.02] p-4">
       <p className="text-[0.6rem] uppercase tracking-[0.3em] text-white/40">{label}</p>
       <p className="mt-2 font-poppins text-2xl font-bold text-enigmia-gold">{value}</p>
+    </div>
+  );
+}
+
+/* ─────────── PARAMÈTRES ─────────── */
+function SettingsTab() {
+  const [settings, setSettings] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    api.settings.get()
+      .then((s) => setSettings(s || { hackathonLaunched: false }))
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const toggleLaunch = async () => {
+    const next = !settings.hackathonLaunched;
+    if (next && !confirm('Activer le lancement ? Le bouton "Lancer le hackathon" deviendra visible par tous les visiteurs de la landing page.')) return;
+    if (!next && !confirm('Désactiver le lancement ? Le bouton disparaîtra de la landing page.')) return;
+    setSaving(true);
+    setError('');
+    try {
+      const updated = await api.settings.update({ hackathonLaunched: next });
+      setSettings(updated || { ...settings, hackathonLaunched: next });
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return <p className="text-white/40">Chargement…</p>;
+  if (!settings) return <p className="text-red-400">{error || 'Erreur de chargement'}</p>;
+
+  const launched = settings.hackathonLaunched;
+
+  return (
+    <div className="max-w-2xl">
+      <div className="mb-6">
+        <h2 className="font-poppins text-2xl font-bold">Paramètres</h2>
+        <p className="mt-1 text-sm text-white/60">Contrôles globaux de l'événement.</p>
+      </div>
+
+      <div className="border border-white/10 bg-white/[0.02] p-6">
+        <div className="flex items-start justify-between gap-6">
+          <div className="flex-1">
+            <h3 className="font-poppins text-lg font-semibold">Lancement du hackathon</h3>
+            <p className="mt-2 text-sm text-white/60">
+              Quand c'est activé, un bouton <span className="text-enigmia-gold">« ⚡ Lancer le hackathon »</span> apparaît sur la page d'accueil pour tous les visiteurs et mène à l'escape game.
+            </p>
+            <p className="mt-3 text-xs uppercase tracking-widest">
+              Statut actuel :{' '}
+              <span className={launched ? 'text-enigmia-gold' : 'text-white/40'}>
+                {launched ? '● Activé — bouton visible' : '○ Désactivé — bouton caché'}
+              </span>
+            </p>
+          </div>
+
+          <button
+            onClick={toggleLaunch}
+            disabled={saving}
+            className={`relative h-9 w-16 shrink-0 rounded-full border transition-colors disabled:opacity-50 ${
+              launched ? 'border-enigmia-gold bg-enigmia-gold/30' : 'border-white/20 bg-white/5'
+            }`}
+            aria-label="Toggle lancement hackathon"
+          >
+            <span
+              className={`absolute top-1 h-6 w-6 rounded-full transition-all ${
+                launched ? 'left-8 bg-enigmia-gold' : 'left-1 bg-white/40'
+              }`}
+            />
+          </button>
+        </div>
+
+        {error && <p className="mt-4 text-sm text-red-400">{error}</p>}
+
+        <div className="mt-6 border-t border-white/10 pt-4">
+          <button
+            onClick={toggleLaunch}
+            disabled={saving}
+            className={`border px-6 py-3 text-xs font-semibold uppercase tracking-[0.25em] transition-colors disabled:opacity-50 ${
+              launched
+                ? 'border-red-500/50 text-red-400 hover:bg-red-500/10'
+                : 'border-enigmia-gold bg-enigmia-gold text-enigmia-dark hover:bg-transparent hover:text-enigmia-gold'
+            }`}
+          >
+            {saving ? 'Enregistrement…' : launched ? 'Désactiver le lancement' : '⚡ Lancer le hackathon'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

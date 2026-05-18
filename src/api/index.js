@@ -72,6 +72,12 @@ export const api = {
     cancel: (id) => apiFetch(`/api/admin/bookings/${id}`, { method: 'DELETE' }),
   },
 
+  /* ───── Settings (global) ───── */
+  settings: {
+    get: () => apiFetch('/api/settings'),
+    update: (data) => apiFetch('/api/admin/settings', json('PATCH')(data)),
+  },
+
   /* ───── Submissions (livrables) ───── */
   submissions: {
     me: () => apiFetch('/api/team/submission'),

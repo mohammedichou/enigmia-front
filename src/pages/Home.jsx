@@ -13,11 +13,13 @@ import PrizesSection from '../components/sections/PrizesSection';
 import ProfilesSection from '../components/sections/ProfilesSection';
 import ConceptSection from '../components/sections/ConceptSection';
 import ContactPage from '../components/sections/ContactPage';
+import HackathonLaunchButton from '../components/HackathonLaunchButton';
+
 export default function Home() {
   return (
     <div className="bg-enigmia-dark min-h-screen text-white selection:bg-enigmia-gold selection:text-enigmia-dark">
       <Navigation />
-      
+
       <main>
         <SplitHero />
         <StorySection />
@@ -29,10 +31,10 @@ export default function Home() {
         <ContactPage />
 
         <Footer />
-      
+
       </main>
 
-      
+      <HackathonLaunchButton />
     </div>
   );
 }
