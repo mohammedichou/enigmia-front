@@ -1,4 +1,4 @@
-import { apiFetch, API_URL, getToken } from './client';
+import { apiFetch, API_URL, getToken, downloadFile } from './client';
 
 const json = (method) => (data) => ({
   method,
@@ -50,6 +50,7 @@ export const api = {
   documents: {
     list: () => apiFetch('/api/documents'),
     downloadUrl: (id) => `${API_URL}/api/documents/${id}/download`,
+    download: (id, filename) => downloadFile(`/api/documents/${id}/download`, filename),
     upload: (title, file) => {
       const fd = new FormData();
       fd.append('title', title);
@@ -106,6 +107,7 @@ export const api = {
     },
     listAll: () => apiFetch('/api/admin/submissions'),
     pitchUrl: (id) => `${API_URL}/api/admin/submissions/${id}/pitch?token=${getToken()}`,
+    downloadPitch: (id, filename) => downloadFile(`/api/admin/submissions/${id}/pitch`, filename),
   },
 };
 

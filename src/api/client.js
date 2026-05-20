@@ -60,3 +60,32 @@ export async function apiFetch(path, options = {}) {
 export function buildFileUrl(path) {
   return `${API_URL}${path}`;
 }
+
+// Télécharge un fichier protégé en envoyant le JWT dans l'header,
+// puis déclenche le download côté navigateur via un blob.
+export async function downloadFile(path, suggestedFilename = 'download') {
+  const url = path.startsWith('http') ? path : `${API_URL}${path}`;
+  const token = getToken();
+  const res = await fetch(url, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) {
+    let msg = `HTTP ${res.status}`;
+    try {
+      const data = await res.json();
+      msg = data?.error || data?.message || msg;
+    } catch {
+      // ignore
+    }
+    throw new Error(msg);
+  }
+  const blob = await res.blob();
+  const blobUrl = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = blobUrl;
+  a.download = suggestedFilename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 1500);
+}

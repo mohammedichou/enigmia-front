@@ -245,7 +245,13 @@ function DocumentsTab() {
                 <p className="truncate font-poppins text-sm font-semibold">{doc.title}</p>
                 <p className="text-xs text-white/40">{doc.originalName || doc.filename} · {doc.size && `${Math.round(doc.size / 1024)} KB`}</p>
               </div>
-              <a href={api.documents.downloadUrl(doc._id || doc.id)} target="_blank" rel="noreferrer" className="text-xs text-enigmia-gold hover:underline">Télécharger</a>
+              <button
+                onClick={async () => {
+                  try { await api.documents.download(doc._id || doc.id, doc.originalName || doc.filename); }
+                  catch (e) { alert(`Téléchargement impossible : ${e.message}`); }
+                }}
+                className="text-xs text-enigmia-gold hover:underline"
+              >Télécharger</button>
               <button onClick={() => remove(doc._id || doc.id)} className="text-xs text-red-400/70 hover:text-red-400">Supprimer</button>
             </div>
           ))}
@@ -535,7 +541,13 @@ function SubmissionsTab() {
                   </p>
                   <p className="mt-1 text-sm">
                     <span className="text-white/40">Pitch : </span>
-                    <a href={api.submissions.pitchUrl(s._id || s.id)} target="_blank" rel="noreferrer" className="text-enigmia-gold underline hover:text-white">📄 {s.pitchOriginalName || s.pitchFilename}</a>
+                    <button
+                      onClick={async () => {
+                        try { await api.submissions.downloadPitch(s._id || s.id, s.pitchOriginalName || s.pitchFilename); }
+                        catch (e) { alert(`Téléchargement impossible : ${e.message}`); }
+                      }}
+                      className="text-enigmia-gold underline hover:text-white"
+                    >📄 {s.pitchOriginalName || s.pitchFilename}</button>
                   </p>
                 </div>
                 <div className="shrink-0 text-right text-xs text-white/50">

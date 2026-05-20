@@ -264,14 +264,15 @@ function ResourcesTab() {
                   {doc.originalName || doc.filename} · {doc.size ? `${Math.round(doc.size / 1024)} KB` : ''} · {doc.uploadedAt && formatDate(doc.uploadedAt.slice(0, 10))}
                 </p>
               </div>
-              <a
-                href={api.documents.downloadUrl(doc._id || doc.id)}
-                target="_blank"
-                rel="noreferrer"
+              <button
+                onClick={async () => {
+                  try { await api.documents.download(doc._id || doc.id, doc.originalName || doc.filename); }
+                  catch (e) { alert(`Téléchargement impossible : ${e.message}`); }
+                }}
                 className="shrink-0 border border-enigmia-gold/40 px-3 py-1.5 text-xs uppercase tracking-widest text-enigmia-gold transition-colors hover:bg-enigmia-gold hover:text-enigmia-dark"
               >
                 Télécharger
-              </a>
+              </button>
             </div>
           ))}
         </div>
