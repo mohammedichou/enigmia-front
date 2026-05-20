@@ -186,12 +186,20 @@ function TeamsTab() {
 }
 
 /* ─────────── DOCUMENTS ─────────── */
+const RES_TYPES = [
+  { id: 'pdf',   label: 'PDF',           icon: '📄' },
+  { id: 'link',  label: 'Lien externe',  icon: '🔗' },
+  { id: 'video', label: 'Vidéo YouTube', icon: '▶️' },
+];
+
 function DocumentsTab() {
   const [docs, setDocs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [type, setType] = useState('pdf');
   const [title, setTitle] = useState('');
   const [file, setFile] = useState(null);
-  const [uploading, setUploading] = useState(false);
+  const [url, setUrl] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -201,16 +209,31 @@ function DocumentsTab() {
 
   useEffect(() => { refresh(); }, [refresh]);
 
-  const upload = async () => {
-    if (!title || !file) return;
-    setUploading(true);
-    try { await api.documents.upload(title, file); setTitle(''); setFile(null); refresh(); }
-    catch (e) { alert(e.message); }
-    finally { setUploading(false); }
+  const reset = () => { setTitle(''); setFile(null); setUrl(''); };
+
+  const submit = async () => {
+    if (!title) return;
+    setSubmitting(true);
+    try {
+      if (type === 'pdf') {
+        if (!file) { alert('Sélectionnez un fichier PDF.'); return; }
+        await api.documents.upload(title, file);
+      } else {
+        if (!url.startsWith('http')) { alert('URL invalide (doit commencer par http).'); return; }
+        if (type === 'video' && !/youtube\.com|youtu\.be/.test(url)) {
+          alert('Vidéo : merci de coller un lien YouTube.');
+          return;
+        }
+        await api.documents.addLink({ title, type, url });
+      }
+      reset();
+      refresh();
+    } catch (e) { alert(e.message); }
+    finally { setSubmitting(false); }
   };
 
   const remove = async (id) => {
-    if (!confirm('Supprimer ce document ?')) return;
+    if (!confirm('Supprimer cette ressource ?')) return;
     try { await api.documents.delete(id); refresh(); }
     catch (e) { alert(e.message); }
   };
@@ -219,42 +242,96 @@ function DocumentsTab() {
     <div>
       <div className="mb-6">
         <h2 className="font-poppins text-2xl font-bold">Ressources pédagogiques</h2>
-        <p className="mt-1 text-sm text-white/60">PDFs téléchargeables par les équipes.</p>
+        <p className="mt-1 text-sm text-white/60">PDFs, liens externes ou vidéos YouTube — visibles côté équipe.</p>
       </div>
 
       <div className="mb-8 border border-white/10 bg-white/[0.02] p-5">
-        <h3 className="mb-4 text-xs uppercase tracking-widest text-enigmia-gold">+ Nouveau document</h3>
+        <h3 className="mb-4 text-xs uppercase tracking-widest text-enigmia-gold">+ Nouvelle ressource</h3>
+
+        <div className="mb-4 flex gap-2">
+          {RES_TYPES.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => { setType(t.id); setFile(null); setUrl(''); }}
+              className={`flex items-center gap-2 border px-4 py-2 text-xs uppercase tracking-widest transition-colors ${
+                type === t.id
+                  ? 'border-enigmia-gold bg-enigmia-gold/10 text-enigmia-gold'
+                  : 'border-white/15 text-white/50 hover:border-enigmia-gold/40 hover:text-white'
+              }`}
+            >
+              <span>{t.icon}</span> {t.label}
+            </button>
+          ))}
+        </div>
+
         <div className="grid gap-3 md:grid-cols-4">
-          <input placeholder="Titre" value={title} onChange={(e) => setTitle(e.target.value)} className="border border-white/15 bg-transparent px-3 py-2 text-sm outline-none focus:border-enigmia-gold md:col-span-2" />
-          <label className="flex cursor-pointer items-center justify-center border border-dashed border-white/20 px-3 py-2 text-sm text-white/60 hover:border-enigmia-gold hover:text-enigmia-gold">
-            <input type="file" accept="application/pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} className="hidden" />
-            {file ? `📄 ${file.name}` : '📎 Choisir PDF'}
-          </label>
-          <button onClick={upload} disabled={uploading || !title || !file} className="border border-enigmia-gold bg-enigmia-gold py-2 text-xs font-semibold uppercase tracking-widest text-enigmia-dark hover:bg-transparent hover:text-enigmia-gold disabled:opacity-30">{uploading ? 'Upload…' : 'Uploader'}</button>
+          <input
+            placeholder="Titre de la ressource"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="border border-white/15 bg-transparent px-3 py-2 text-sm outline-none focus:border-enigmia-gold md:col-span-2"
+          />
+
+          {type === 'pdf' ? (
+            <label className="flex cursor-pointer items-center justify-center border border-dashed border-white/20 px-3 py-2 text-sm text-white/60 hover:border-enigmia-gold hover:text-enigmia-gold">
+              <input type="file" accept="application/pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} className="hidden" />
+              {file ? `📄 ${file.name}` : '📎 Choisir PDF'}
+            </label>
+          ) : (
+            <input
+              type="url"
+              placeholder={type === 'video' ? 'https://youtu.be/…' : 'https://…'}
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              className="border border-white/15 bg-transparent px-3 py-2 text-sm outline-none focus:border-enigmia-gold"
+            />
+          )}
+
+          <button
+            onClick={submit}
+            disabled={submitting || !title || (type === 'pdf' ? !file : !url)}
+            className="border border-enigmia-gold bg-enigmia-gold py-2 text-xs font-semibold uppercase tracking-widest text-enigmia-dark hover:bg-transparent hover:text-enigmia-gold disabled:opacity-30"
+          >
+            {submitting ? 'Envoi…' : 'Ajouter'}
+          </button>
         </div>
       </div>
 
       {loading ? <p className="text-white/40">Chargement…</p> : docs.length === 0 ? (
-        <p className="text-sm text-white/40">Aucun document.</p>
+        <p className="text-sm text-white/40">Aucune ressource.</p>
       ) : (
         <div className="space-y-2">
-          {docs.map((doc) => (
-            <div key={doc._id || doc.id} className="flex items-center gap-4 border border-white/10 bg-white/[0.02] p-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-enigmia-gold/10 text-enigmia-gold">⎙</div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-poppins text-sm font-semibold">{doc.title}</p>
-                <p className="text-xs text-white/40">{doc.originalName || doc.filename} · {doc.size && `${Math.round(doc.size / 1024)} KB`}</p>
+          {docs.map((doc) => {
+            const t = doc.type || 'pdf';
+            const meta = RES_TYPES.find((x) => x.id === t) || RES_TYPES[0];
+            return (
+              <div key={doc._id || doc.id} className="flex items-center gap-4 border border-white/10 bg-white/[0.02] p-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-enigmia-gold/10 text-base text-enigmia-gold">{meta.icon}</div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-poppins text-sm font-semibold">{doc.title}</p>
+                  <p className="truncate text-xs text-white/40">
+                    {t === 'pdf'
+                      ? `${doc.originalName || doc.filename}${doc.size ? ` · ${Math.round(doc.size / 1024)} KB` : ''}`
+                      : doc.url}
+                  </p>
+                </div>
+                {t === 'pdf' ? (
+                  <button
+                    onClick={async () => {
+                      try { await api.documents.download(doc._id || doc.id, doc.originalName || doc.filename); }
+                      catch (e) { alert(`Téléchargement impossible : ${e.message}`); }
+                    }}
+                    className="text-xs text-enigmia-gold hover:underline"
+                  >Télécharger</button>
+                ) : (
+                  <a href={doc.url} target="_blank" rel="noreferrer" className="text-xs text-enigmia-gold hover:underline">
+                    Ouvrir →
+                  </a>
+                )}
+                <button onClick={() => remove(doc._id || doc.id)} className="text-xs text-red-400/70 hover:text-red-400">Supprimer</button>
               </div>
-              <button
-                onClick={async () => {
-                  try { await api.documents.download(doc._id || doc.id, doc.originalName || doc.filename); }
-                  catch (e) { alert(`Téléchargement impossible : ${e.message}`); }
-                }}
-                className="text-xs text-enigmia-gold hover:underline"
-              >Télécharger</button>
-              <button onClick={() => remove(doc._id || doc.id)} className="text-xs text-red-400/70 hover:text-red-400">Supprimer</button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

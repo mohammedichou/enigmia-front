@@ -57,6 +57,8 @@ export const api = {
       fd.append('file', file);
       return apiFetch('/api/admin/documents', { method: 'POST', body: fd });
     },
+    addLink: ({ title, type, url }) =>
+      apiFetch('/api/admin/documents/link', json('POST')({ title, type, url })),
     delete: (id) => apiFetch(`/api/admin/documents/${id}`, { method: 'DELETE' }),
   },
 

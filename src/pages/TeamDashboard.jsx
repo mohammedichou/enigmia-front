@@ -253,30 +253,89 @@ function ResourcesTab() {
       ) : (
         <div className="grid gap-3 md:grid-cols-2">
           {docs.map((doc) => (
-            <div
-              key={doc._id || doc.id}
-              className="group flex items-center gap-4 border border-white/10 bg-white/[0.02] p-4 transition-colors hover:border-enigmia-gold/40"
-            >
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded bg-enigmia-gold/10 text-xl text-enigmia-gold">⎙</div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-poppins text-sm font-semibold">{doc.title}</p>
-                <p className="text-xs text-white/40">
-                  {doc.originalName || doc.filename} · {doc.size ? `${Math.round(doc.size / 1024)} KB` : ''} · {doc.uploadedAt && formatDate(doc.uploadedAt.slice(0, 10))}
-                </p>
-              </div>
-              <button
-                onClick={async () => {
-                  try { await api.documents.download(doc._id || doc.id, doc.originalName || doc.filename); }
-                  catch (e) { alert(`Téléchargement impossible : ${e.message}`); }
-                }}
-                className="shrink-0 border border-enigmia-gold/40 px-3 py-1.5 text-xs uppercase tracking-widest text-enigmia-gold transition-colors hover:bg-enigmia-gold hover:text-enigmia-dark"
-              >
-                Télécharger
-              </button>
-            </div>
+            <ResourceCard key={doc._id || doc.id} doc={doc} />
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function getYouTubeId(url = '') {
+  const m = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+  return m ? m[1] : null;
+}
+
+function ResourceCard({ doc }) {
+  const type = doc.type || 'pdf';
+
+  if (type === 'video') {
+    const id = getYouTubeId(doc.url);
+    const thumb = id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : null;
+    return (
+      <a
+        href={doc.url}
+        target="_blank"
+        rel="noreferrer"
+        className="group flex items-center gap-4 border border-white/10 bg-white/[0.02] p-3 transition-colors hover:border-enigmia-gold/40"
+      >
+        <div className="relative h-16 w-24 shrink-0 overflow-hidden bg-black">
+          {thumb ? (
+            <img src={thumb} alt="" className="h-full w-full object-cover opacity-80 group-hover:opacity-100" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-2xl text-enigmia-gold/60">▶</div>
+          )}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="rounded-full bg-black/60 px-2 py-1 text-xs text-enigmia-gold">▶</span>
+          </div>
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-poppins text-sm font-semibold">{doc.title}</p>
+          <p className="text-xs text-white/40">Vidéo YouTube · clique pour ouvrir →</p>
+        </div>
+      </a>
+    );
+  }
+
+  if (type === 'link') {
+    return (
+      <a
+        href={doc.url}
+        target="_blank"
+        rel="noreferrer"
+        className="group flex items-center gap-4 border border-white/10 bg-white/[0.02] p-4 transition-colors hover:border-enigmia-gold/40"
+      >
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded bg-enigmia-gold/10 text-xl text-enigmia-gold">🔗</div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-poppins text-sm font-semibold">{doc.title}</p>
+          <p className="truncate text-xs text-white/40">{doc.url}</p>
+        </div>
+        <span className="shrink-0 text-xs uppercase tracking-widest text-enigmia-gold">Ouvrir →</span>
+      </a>
+    );
+  }
+
+  // PDF (default)
+  return (
+    <div className="group flex items-center gap-4 border border-white/10 bg-white/[0.02] p-4 transition-colors hover:border-enigmia-gold/40">
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded bg-enigmia-gold/10 text-xl text-enigmia-gold">⎙</div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-poppins text-sm font-semibold">{doc.title}</p>
+        <p className="text-xs text-white/40">
+          {doc.originalName || doc.filename}
+          {doc.size ? ` · ${Math.round(doc.size / 1024)} KB` : ''}
+          {doc.uploadedAt ? ` · ${formatDate(doc.uploadedAt.slice(0, 10))}` : ''}
+        </p>
+      </div>
+      <button
+        onClick={async () => {
+          try { await api.documents.download(doc._id || doc.id, doc.originalName || doc.filename); }
+          catch (e) { alert(`Téléchargement impossible : ${e.message}`); }
+        }}
+        className="shrink-0 border border-enigmia-gold/40 px-3 py-1.5 text-xs uppercase tracking-widest text-enigmia-gold transition-colors hover:bg-enigmia-gold hover:text-enigmia-dark"
+      >
+        Télécharger
+      </button>
     </div>
   );
 }
