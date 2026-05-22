@@ -479,6 +479,16 @@ function MentorsTab() {
     } catch (e) { alert(e.message); }
   };
 
+  const changeMentorPassword = async (id, name) => {
+    const pwd = prompt(`Nouveau mot de passe pour le mentor "${name}" :`);
+    if (!pwd) return;
+    if (pwd.length < 4) { alert('4 caractères minimum.'); return; }
+    try {
+      await api.mentors.update(id, { password: pwd });
+      alert('Mot de passe du mentor mis à jour ✓');
+    } catch (e) { alert(e.message); }
+  };
+
   return (
     <div>
       <div className="mb-6">
@@ -507,13 +517,22 @@ function MentorsTab() {
               onClick={() => setSelected(mid)}
               className={`relative cursor-pointer border p-4 transition-colors ${selected === mid ? 'border-enigmia-gold bg-enigmia-gold/10' : 'border-white/10 bg-white/[0.02] hover:border-enigmia-gold/40'}`}
             >
-              <button
-                onClick={(e) => { e.stopPropagation(); deleteMentor(mid, m.displayName); }}
-                className="absolute right-2 top-2 text-xs text-red-400/60 hover:text-red-400"
-                title="Supprimer ce mentor"
-              >
-                ✕
-              </button>
+              <div className="absolute right-2 top-2 flex gap-2">
+                <button
+                  onClick={(e) => { e.stopPropagation(); changeMentorPassword(mid, m.displayName); }}
+                  className="text-xs text-white/40 hover:text-enigmia-gold"
+                  title="Changer le mot de passe"
+                >
+                  🔑
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); deleteMentor(mid, m.displayName); }}
+                  className="text-xs text-red-400/60 hover:text-red-400"
+                  title="Supprimer ce mentor"
+                >
+                  ✕
+                </button>
+              </div>
               <div className="text-2xl">{m.avatar || '👤'}</div>
               <p className="mt-2 text-sm font-semibold">{m.displayName}</p>
               <p className="text-[0.65rem] uppercase tracking-widest text-enigmia-gold">{m.expertise}</p>
