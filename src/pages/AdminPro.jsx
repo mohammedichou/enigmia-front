@@ -536,6 +536,7 @@ function MentorsTab() {
               <div className="text-2xl">{m.avatar || '👤'}</div>
               <p className="mt-2 text-sm font-semibold">{m.displayName}</p>
               <p className="text-[0.65rem] uppercase tracking-widest text-enigmia-gold">{m.expertise}</p>
+              <p className="mt-1 font-mono text-[0.65rem] text-white/40">@{m.username}</p>
             </div>
           );
         })}
